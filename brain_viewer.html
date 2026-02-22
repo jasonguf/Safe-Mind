@@ -1,0 +1,3562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroView - Neural Imaging System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-dark: #141a22;
+            --bg-panel: #181f28;
+            --bg-input: #10151c;
+            --border: #2a3a4a;
+            --text: #c5d0dc;
+            --text-dim: #6a7a8a;
+            --accent: #4a9a8c;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            font-size: 15px;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .welcome-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .welcome-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+        }
+
+        .welcome-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--text-dim);
+            margin-bottom: 50px;
+        }
+
+        .welcome-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        .welcome-box-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .welcome-box-desc {
+            color: var(--text-dim);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .welcome-btn {
+            display: inline-block;
+            padding: 14px 40px;
+            background: var(--accent);
+            border: none;
+            border-radius: 4px;
+            color: var(--bg-dark);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .welcome-btn:hover {
+            background: #5aaa9c;
+        }
+
+        .loading-note {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 12px;
+            font-style: italic;
+        }
+
+        .demo-section {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .demo-title {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .demo-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .demo-btn {
+            padding: 10px 20px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .demo-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .demo-special {
+            border-color: #8a6a9a;
+            color: #aa8aba;
+        }
+
+        .demo-special:hover {
+            border-color: #aa8aba;
+            color: #caaadc;
+            background: rgba(138, 106, 154, 0.1);
+        }
+
+        .welcome-formats {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        /* Processing Screen */
+        .processing-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .processing-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .processing-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .processing-subtitle {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            text-align: center;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        .processing-subtitle.hidden {
+            display: none;
+        }
+
+        .download-info {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            color: var(--accent);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .download-info.hidden {
+            display: none;
+        }
+
+        .processing-visual {
+            width: 320px;
+            height: 280px;
+            position: relative;
+            margin-bottom: 40px;
+            perspective: 800px;
+        }
+
+        .slice-stack {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotateX(55deg) rotateZ(-30deg);
+            transform-style: preserve-3d;
+            width: 160px;
+            height: 160px;
+        }
+
+        .slice-layer {
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            background: var(--bg-panel);
+            border: 1px solid var(--accent);
+            border-radius: 2px;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateZ(0px) translateY(40px);
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+        }
+
+        .slice-layer.visible {
+            opacity: 1;
+            transform: translateZ(var(--z-offset)) translateY(0);
+        }
+
+        .slice-layer img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.85;
+        }
+
+        .slice-layer::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(74, 154, 140, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .building-label {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+        }
+
+        .processing-status {
+            text-align: center;
+        }
+
+        .processing-step {
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                var(--accent) 0%,
+                #6fcfbe 50%,
+                var(--accent) 100%
+            );
+            background-size: 200% 100%;
+            width: 0%;
+            transition: width 0.3s;
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Main App */
+        .app {
+            display: grid;
+            grid-template-columns: 260px 1fr 300px;
+            grid-template-rows: 50px 1fr;
+            height: 100vh;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .app.visible { opacity: 1; }
+
+        /* Toolbar */
+        .toolbar {
+            grid-column: 1 / -1;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 30px;
+        }
+
+        .app-title {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 28px;
+            background: var(--border);
+        }
+
+        .toolbar-stats {
+            display: flex;
+            gap: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .toolbar-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-label {
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            color: var(--accent);
+        }
+
+        .mesh-loading {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 14px;
+            background: rgba(74, 154, 140, 0.15);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--accent);
+            margin-left: 15px;
+        }
+
+        .mesh-loading.visible {
+            display: flex;
+        }
+
+        .mesh-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        .mesh-progress-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 120px;
+        }
+
+        .mesh-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .mesh-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        .mesh-progress-hint {
+            font-size: 9px;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toolbar-status {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .status-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .status-text {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+        }
+
+        /* Panels */
+        .panel {
+            background: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .panel-left { border-right: 1px solid var(--border); }
+        .panel-right { border-left: 1px solid var(--border); }
+
+        .panel-section {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .section-marker {
+            width: 3px;
+            height: 14px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+        }
+
+        /* Controls */
+        .control-row {
+            margin-bottom: 14px;
+        }
+
+        .control-row:last-child { margin-bottom: 0; }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .label-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .control-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--accent);
+        }
+
+        .slider-track {
+            position: relative;
+            height: 6px;
+            background: var(--bg-input);
+            border-radius: 3px;
+            border: 1px solid var(--border);
+        }
+
+        .slider {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 18px;
+            transform: translateY(-50%);
+            -webkit-appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid var(--bg-dark);
+        }
+
+        .slider-fill {
+            position: absolute;
+            top: 0; left: 0;
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+
+        .toggle-label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .toggle {
+            width: 40px;
+            height: 22px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .toggle.on {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: var(--text);
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .toggle.on::after {
+            transform: translateX(18px);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Color Scheme */
+        .color-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .color-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .color-btn:hover { transform: scale(1.1); }
+        .color-btn.active { border-color: var(--text); }
+
+        .color-teal { background: #4a9a8c; }
+        .color-steel { background: #5a7a9a; }
+        .color-slate { background: #6a6a8a; }
+        .color-copper { background: #9a7a5a; }
+        .color-sage { background: #6a8a6a; }
+
+        /* Viewport */
+        .viewport {
+            position: relative;
+            background: var(--bg-dark);
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Slices */
+        .slice-group {
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .slice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .slice-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slice-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+        }
+
+        .slice-toggle {
+            width: 32px;
+            height: 18px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .slice-toggle.on {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .slice-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 12px;
+            height: 12px;
+            background: var(--text);
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .slice-toggle.on::after {
+            transform: translateX(14px);
+        }
+
+        .slice-index {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .slice-container {
+            background: #000;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+
+        .slice-img {
+            width: 100%;
+            display: block;
+        }
+
+        .slice-slider {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            background: var(--bg-input);
+            border-radius: 2px;
+        }
+
+        .slice-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid var(--bg-dark);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        #file-input { display: none; }
+
+        /* Annotation System */
+        .annotation-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-input);
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .annotation-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .ann-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ann-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .ann-label {
+            flex: 1;
+            font-size: 12px;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .ann-delete {
+            cursor: pointer;
+            color: var(--text-dim);
+            font-size: 16px;
+            padding: 0 4px;
+            line-height: 1;
+        }
+
+        .ann-delete:hover {
+            color: #ff4444;
+        }
+
+        .ann-comment {
+            width: 100%;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            color: var(--text);
+            font-size: 11px;
+            padding: 6px 8px;
+            resize: none;
+            font-family: inherit;
+            min-height: 40px;
+        }
+
+        .ann-comment:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .ann-comment::placeholder {
+            color: var(--text-dim);
+        }
+
+        .ann-size-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ann-size-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ann-size-btn {
+            width: 22px;
+            height: 22px;
+            border: 1px solid var(--border);
+            background: var(--bg-dark);
+            color: var(--text);
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .ann-size-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .ann-size-value {
+            font-size: 11px;
+            color: var(--text);
+            min-width: 20px;
+            text-align: center;
+        }
+
+        #annotation-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        /* Annotation Tooltip */
+        .annotation-tooltip {
+            position: fixed;
+            background: var(--bg-panel);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            padding: 10px 14px;
+            max-width: 250px;
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .annotation-tooltip.visible {
+            opacity: 1;
+        }
+
+        .annotation-tooltip-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .annotation-tooltip-comment {
+            font-size: 12px;
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+
+        .annotation-tooltip-nocomment {
+            font-size: 11px;
+            color: var(--text-dim);
+            font-style: italic;
+        }
+
+        .annotation-colors {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .ann-color-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ann-color-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .ann-color-btn.active {
+            border-color: var(--text);
+        }
+
+        .ann-mode-indicator {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .ann-mode-indicator.active {
+            color: var(--accent);
+            font-style: normal;
+        }
+
+        /* Share Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            width: 420px;
+            max-width: 90vw;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--text);
+        }
+
+        .share-link-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .share-link-input {
+            flex: 1;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 10px 12px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .share-link-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-copy {
+            padding: 10px 16px;
+            background: var(--accent);
+            border: none;
+            border-radius: 4px;
+            color: var(--bg-dark);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: #5aaa9c;
+        }
+
+        .btn-copy.copied {
+            background: #44aa44;
+        }
+
+        .session-info {
+            padding: 12px;
+            background: var(--bg-input);
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .session-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+
+        .session-stat-label {
+            color: var(--text-dim);
+            font-size: 13px;
+        }
+
+        .session-stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--accent);
+        }
+
+        .btn-danger {
+            width: 100%;
+            padding: 10px 14px;
+            background: transparent;
+            border: 1px solid #aa4444;
+            border-radius: 4px;
+            color: #aa4444;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-danger:hover {
+            background: #aa4444;
+            color: var(--bg-dark);
+        }
+
+        /* Viewer Mode Banner */
+        .viewer-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--accent);
+            color: var(--bg-dark);
+            text-align: center;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 1100;
+            display: none;
+        }
+
+        .viewer-banner.visible {
+            display: block;
+        }
+
+        /* Adjust app layout when viewer banner is visible */
+        .viewer-banner.visible + .app,
+        body:has(.viewer-banner.visible) .app {
+            margin-top: 36px;
+        }
+
+        /* Joining Screen */
+        .joining-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .joining-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .joining-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .joining-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div class="welcome-screen" id="welcome-screen">
+        <div class="welcome-content">
+            <div class="welcome-logo">NEUROVIEW</div>
+            <div class="welcome-subtitle">Neural Imaging System</div>
+
+            <div class="welcome-box">
+                <div class="welcome-box-title">Load Brain Scan</div>
+                <div class="welcome-box-desc">
+                    Select a NIfTI format brain MRI scan to generate an interactive 3D volumetric model with cross-sectional slice views.
+                </div>
+                <input type="file" id="file-input" accept=".nii,.nii.gz,.gz">
+                <button class="welcome-btn" onclick="document.getElementById('file-input').click()">
+                    Select NIfTI File
+                </button>
+                <div class="loading-note">Note: Processing uploaded files may take 10-30 seconds</div>
+
+                <div class="demo-section">
+                    <div class="demo-title">Or try a demo scan (instant):</div>
+                    <div class="demo-buttons">
+                        <button class="demo-btn" onclick="loadDemo('brain1.nii.gz')">Brain 1</button>
+                        <button class="demo-btn" onclick="loadDemo('brain2.nii.gz')">Brain 2</button>
+                        <button class="demo-btn" onclick="loadDemo('brain3.nii.gz')">Brain 3</button>
+                        <button class="demo-btn demo-special" onclick="loadDemo('Iguana.nii.gz')">Iguana</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="welcome-formats">Supported: .nii, .nii.gz</div>
+        </div>
+    </div>
+
+    <!-- Processing Screen -->
+    <div class="processing-screen hidden" id="processing-screen">
+        <div class="processing-title">Building 3D Model</div>
+        <div class="processing-subtitle hidden" id="processing-subtitle">MRI files can be large. Loading times may vary from 10 seconds to 1 minute depending on file size and connection speed. Please don't close this tab.</div>
+        <div class="download-info hidden" id="download-info">0.0 / 0.0 MB</div>
+
+        <div class="loading-spinner"></div>
+
+        <div class="processing-visual">
+            <div class="slice-stack" id="slice-stack">
+                <!-- Slices will be added dynamically -->
+            </div>
+            <div class="building-label">Reconstructing</div>
+        </div>
+
+        <div class="processing-status">
+            <div class="processing-step" id="processing-step">Reading volume data...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app" id="main-app">
+        <div class="toolbar">
+            <div class="app-title">NeuroView</div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-stats">
+                <div class="toolbar-stat">
+                    <span class="stat-label">Vertices</span>
+                    <span class="stat-value" id="stat-verts">--</span>
+                </div>
+                <div class="toolbar-stat">
+                    <span class="stat-label">Faces</span>
+                    <span class="stat-value" id="stat-faces">--</span>
+                </div>
+                <div class="toolbar-stat">
+                    <span class="stat-label">Matrix</span>
+                    <span class="stat-value" id="stat-dims">--</span>
+                </div>
+            </div>
+            <div class="mesh-loading" id="mesh-loading">
+                <div class="mesh-spinner"></div>
+                <div class="mesh-progress-info">
+                    <span id="mesh-progress-text">Extracting...</span>
+                    <div class="mesh-progress-bar">
+                        <div class="mesh-progress-fill" id="mesh-progress-fill"></div>
+                    </div>
+                    <span class="mesh-progress-hint">May take up to 30 seconds</span>
+                </div>
+            </div>
+            <div class="toolbar-status">
+                <div class="status-indicator"></div>
+                <span class="status-text" id="status-text">1 Viewing</span>
+            </div>
+        </div>
+
+        <div class="panel panel-left">
+            <div class="panel-section">
+                <div class="section-header">
+                    <div class="section-marker"></div>
+                    <div class="section-title">File</div>
+                </div>
+                <button class="btn" id="btn-new">Load New Scan</button>
+                <button class="btn" id="btn-share" style="margin-top: 8px;">Share Session</button>
+            </div>
+
+            <div class="panel-section">
+                <div class="section-header">
+                    <div class="section-marker"></div>
+                    <div class="section-title">Color Theme</div>
+                </div>
+                <div class="color-options">
+                    <div class="color-btn color-teal active" data-scheme="teal"></div>
+                    <div class="color-btn color-steel" data-scheme="steel"></div>
+                    <div class="color-btn color-slate" data-scheme="slate"></div>
+                    <div class="color-btn color-copper" data-scheme="copper"></div>
+                    <div class="color-btn color-sage" data-scheme="sage"></div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="section-header">
+                    <div class="section-marker"></div>
+                    <div class="section-title">Visualization</div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span class="label-text">Depth Threshold</span>
+                        <span class="control-value" id="val-threshold">50%</span>
+                    </div>
+                    <div class="slider-track">
+                        <div class="slider-fill" id="fill-threshold" style="width: 57%"></div>
+                        <input type="range" class="slider" id="slider-threshold" min="0.2" max="0.8" step="0.1" value="0.5">
+                    </div>
+                </div>
+
+                <div class="control-row">
+                    <div class="control-label">
+                        <span class="label-text">Opacity</span>
+                        <span class="control-value" id="val-opacity">100%</span>
+                    </div>
+                    <div class="slider-track">
+                        <div class="slider-fill" id="fill-opacity" style="width: 100%"></div>
+                        <input type="range" class="slider" id="slider-opacity" min="0.1" max="1" step="0.05" value="1">
+                    </div>
+                </div>
+
+                <div class="control-row" id="wireframe-detail-row">
+                    <div class="control-label">
+                        <span class="label-text">Wireframe Detail</span>
+                        <span class="control-value" id="val-meshdetail">180</span>
+                    </div>
+                    <div class="slider-track">
+                        <div class="slider-fill" id="fill-meshdetail" style="width: 100%"></div>
+                        <input type="range" class="slider" id="slider-meshdetail" min="60" max="180" step="10" value="180">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="section-header">
+                    <div class="section-marker"></div>
+                    <div class="section-title">Display</div>
+                </div>
+
+                <div class="toggle-row">
+                    <span class="toggle-label">Wireframe</span>
+                    <div class="toggle on" id="toggle-wireframe"></div>
+                </div>
+
+                <div class="toggle-row">
+                    <span class="toggle-label">Auto Rotate</span>
+                    <div class="toggle on" id="toggle-rotate"></div>
+                </div>
+
+                <div class="toggle-row">
+                    <span class="toggle-label">Solid Surface</span>
+                    <div class="toggle" id="toggle-solid"></div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="section-header">
+                    <div class="section-marker"></div>
+                    <div class="section-title">Annotations</div>
+                </div>
+
+                <div class="toggle-row">
+                    <span class="toggle-label">Annotate Mode</span>
+                    <div class="toggle" id="toggle-annotate"></div>
+                </div>
+                <div class="ann-mode-indicator" id="ann-mode-indicator">Click brain to add markers</div>
+
+                <div class="control-row" style="margin-top: 12px;">
+                    <div class="control-label">
+                        <span class="label-text">Marker Color</span>
+                    </div>
+                    <div class="annotation-colors">
+                        <div class="ann-color-btn active" data-color="#ff4444" style="background: #ff4444;"></div>
+                        <div class="ann-color-btn" data-color="#4488ff" style="background: #4488ff;"></div>
+                        <div class="ann-color-btn" data-color="#44cc44" style="background: #44cc44;"></div>
+                        <div class="ann-color-btn" data-color="#ffcc00" style="background: #ffcc00;"></div>
+                        <div class="ann-color-btn" data-color="#cc44cc" style="background: #cc44cc;"></div>
+                    </div>
+                </div>
+
+                <button class="btn" id="btn-clear-annotations" style="margin-bottom: 12px;">Clear All Markers</button>
+
+                <div id="annotation-list"></div>
+            </div>
+        </div>
+
+        <div class="viewport">
+            <div id="canvas-container"></div>
+            <div class="annotation-tooltip" id="annotation-tooltip">
+                <div class="annotation-tooltip-label" id="tooltip-label"></div>
+                <div class="annotation-tooltip-comment" id="tooltip-comment"></div>
+            </div>
+        </div>
+
+        <div class="panel panel-right">
+            <div class="slice-group">
+                <div class="slice-header">
+                    <div class="slice-header-left">
+                        <span class="slice-title">Axial</span>
+                        <div class="slice-toggle" id="toggle-plane-axial" title="Show on 3D model"></div>
+                    </div>
+                    <span class="slice-index" id="idx-axial">-- / --</span>
+                </div>
+                <div class="slice-container">
+                    <img class="slice-img" id="img-axial" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="">
+                </div>
+                <input type="range" class="slice-slider" id="slider-axial" min="0" max="100" value="50">
+            </div>
+
+            <div class="slice-group">
+                <div class="slice-header">
+                    <div class="slice-header-left">
+                        <span class="slice-title">Sagittal</span>
+                        <div class="slice-toggle" id="toggle-plane-sagittal" title="Show on 3D model"></div>
+                    </div>
+                    <span class="slice-index" id="idx-sagittal">-- / --</span>
+                </div>
+                <div class="slice-container">
+                    <img class="slice-img" id="img-sagittal" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="">
+                </div>
+                <input type="range" class="slice-slider" id="slider-sagittal" min="0" max="100" value="50">
+            </div>
+
+            <div class="slice-group">
+                <div class="slice-header">
+                    <div class="slice-header-left">
+                        <span class="slice-title">Coronal</span>
+                        <div class="slice-toggle" id="toggle-plane-coronal" title="Show on 3D model"></div>
+                    </div>
+                    <span class="slice-index" id="idx-coronal">-- / --</span>
+                </div>
+                <div class="slice-container">
+                    <img class="slice-img" id="img-coronal" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="">
+                </div>
+                <input type="range" class="slice-slider" id="slider-coronal" min="0" max="100" value="50">
+            </div>
+        </div>
+    </div>
+
+    <!-- Joining Screen (for viewers) -->
+    <div class="joining-screen hidden" id="joining-screen">
+        <div class="joining-spinner"></div>
+        <div class="joining-text">Joining Session...</div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal-overlay" id="share-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Share Session</div>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="share-link-container">
+                <input type="text" class="share-link-input" id="share-link" readonly>
+                <button class="btn-copy" id="btn-copy">Copy</button>
+            </div>
+            <div class="session-info">
+                <div class="session-stat">
+                    <span class="session-stat-label">Session ID</span>
+                    <span class="session-stat-value" id="session-id-display">--</span>
+                </div>
+                <div class="session-stat">
+                    <span class="session-stat-label">Editors Connected</span>
+                    <span class="session-stat-value" id="editor-count-display">0</span>
+                </div>
+            </div>
+            <button class="btn-danger" id="btn-end-session">Leave Session</button>
+        </div>
+    </div>
+
+    <script>
+        let scene, camera, renderer, controls, brainMesh, fillLight, backLight;
+        let mriData = null;
+        let volumeData = null;
+        let precomputedMeshes = null;  // Pre-computed meshes at different thresholds
+        let currentDemoFilename = null;  // Track if viewing a demo (for efficient sharing)
+        let isExtracting = false;
+        let currentScheme = 'teal';
+
+        // Annotation system
+        const annotations = {};
+        let annotationIdCounter = 0;
+        let annotationMode = false;
+        let annotationColor = '#ff4444';
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Collaboration system - all users are editors
+        let ws = null;
+        let sessionId = null;
+        let inSession = false;
+        let editorCount = 0;
+        let isApplyingRemoteState = false;  // Prevent feedback loop
+        let userIsDragging = false;  // Track if user is actively interacting with camera
+        let currentMeshData = null;  // Cache current mesh for session sharing
+        let isSessionCreator = false;  // Track if we created this session
+        // Auto-detect the server URL based on how the page was loaded
+        const IS_FILE_PROTOCOL = window.location.protocol === 'file:';
+        const IS_HTTPS = window.location.protocol === 'https:';
+        const API_BASE = IS_FILE_PROTOCOL ? 'http://localhost:8000' : '';
+        const WS_PROTOCOL = IS_HTTPS ? 'wss:' : 'ws:';
+        const WS_BASE = IS_FILE_PROTOCOL ? 'ws://localhost:8000' : `${WS_PROTOCOL}//${window.location.host}`;
+        const SHARE_BASE = IS_FILE_PROTOCOL ? 'http://localhost:8000' : window.location.origin;
+
+        // Slice planes for 3D overlay
+        const slicePlanes = {
+            axial: null,
+            sagittal: null,
+            coronal: null
+        };
+        const sliceTextures = {
+            axial: null,
+            sagittal: null,
+            coronal: null
+        };
+        // Full bounding box for proper plane sizing/positioning
+        let brainBox = {
+            minX: -75, maxX: 75,
+            minY: -75, maxY: 75,
+            minZ: -75, maxZ: 75
+        };
+        // Scale factor applied to mesh - needed for slice alignment
+        let meshScale = 1.0;
+        // Volume physical size and mesh center offset for slice alignment
+        // volumePhysicalSize: [sagittal, coronal, axial] in mm
+        // meshCenterOffset: [sagittal, coronal, axial] - where mesh center was before centering
+        let volumePhysicalSize = null;
+        let meshCenterOffset = null;
+
+        const colorSchemes = {
+            teal:   { accent: '#4a9a8c', brain: 0x4a9a8c, light: 0x4a9a8c, emissive: 0x1a3a34 },
+            steel:  { accent: '#5a7a9a', brain: 0x5a7a9a, light: 0x5a7a9a, emissive: 0x1a2a3a },
+            slate:  { accent: '#6a6a8a', brain: 0x6a6a8a, light: 0x6a6a8a, emissive: 0x2a2a3a },
+            copper: { accent: '#9a7a5a', brain: 0x9a7a5a, light: 0x9a7a5a, emissive: 0x3a2a1a },
+            sage:   { accent: '#6a8a6a', brain: 0x6a8a6a, light: 0x6a8a6a, emissive: 0x2a3a2a }
+        };
+
+        // ============== CLIENT-SIDE MARCHING CUBES ==============
+        // Mesh cache for instant threshold switching
+        const meshCache = new Map();
+
+        function applyColorScheme(scheme) {
+            currentScheme = scheme;
+            const colors = colorSchemes[scheme];
+            document.documentElement.style.setProperty('--accent', colors.accent);
+
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.scheme === scheme);
+            });
+
+            if (brainMesh) {
+                brainMesh.material.color.setHex(colors.brain);
+                brainMesh.material.emissive.setHex(colors.emissive);
+            }
+            if (fillLight) fillLight.color.setHex(colors.light);
+            if (backLight) backLight.color.setHex(colors.light);
+        }
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x141a22);
+
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 2000);
+            camera.position.set(0, 0, 300);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, stencil: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.5;
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+            const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            keyLight.position.set(100, 100, 100);
+            scene.add(keyLight);
+
+            fillLight = new THREE.DirectionalLight(0x4a9a8c, 0.4);
+            fillLight.position.set(-100, 50, -100);
+            scene.add(fillLight);
+
+            backLight = new THREE.DirectionalLight(0x4a9a8c, 0.3);
+            backLight.position.set(0, -100, -50);
+            scene.add(backLight);
+
+            window.addEventListener('resize', onResize);
+            animate();
+        }
+
+        function onResize() {
+            const container = document.getElementById('canvas-container');
+            if (!container) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        let brainMeshBack = null; // For two-pass transparency rendering
+
+        function renderBrain(data) {
+            // Clean up existing meshes
+            if (brainMesh) {
+                scene.remove(brainMesh);
+                brainMesh.geometry.dispose();
+                brainMesh.material.dispose();
+            }
+            if (brainMeshBack) {
+                scene.remove(brainMeshBack);
+                brainMeshBack.geometry.dispose();
+                brainMeshBack.material.dispose();
+            }
+
+            const geometry = new THREE.BufferGeometry();
+
+            const vertCount = data.mesh.vertices.length;
+            const vertices = new Float32Array(vertCount * 3);
+            for (let i = 0; i < vertCount; i++) {
+                vertices[i * 3] = data.mesh.vertices[i][0];
+                vertices[i * 3 + 1] = data.mesh.vertices[i][1];
+                vertices[i * 3 + 2] = data.mesh.vertices[i][2];
+            }
+
+            const faceCount = data.mesh.faces.length;
+            const indices = new Uint32Array(faceCount * 3);
+            for (let i = 0; i < faceCount; i++) {
+                indices[i * 3] = data.mesh.faces[i][0];
+                indices[i * 3 + 1] = data.mesh.faces[i][1];
+                indices[i * 3 + 2] = data.mesh.faces[i][2];
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+            geometry.computeVertexNormals();
+
+            // Ensure normals point outward for proper rendering
+            const normals = geometry.attributes.normal;
+            const positions = geometry.attributes.position;
+            // Check if normals point inward (toward center) and flip if needed
+            let inwardCount = 0;
+            for (let i = 0; i < positions.count; i += 100) {
+                const px = positions.getX(i), py = positions.getY(i), pz = positions.getZ(i);
+                const nx = normals.getX(i), ny = normals.getY(i), nz = normals.getZ(i);
+                // Dot product of position and normal - should be positive if pointing outward
+                if (px * nx + py * ny + pz * nz < 0) inwardCount++;
+            }
+            // If most normals point inward, flip them all
+            if (inwardCount > positions.count / 200) {
+                for (let i = 0; i < normals.count; i++) {
+                    normals.setX(i, -normals.getX(i));
+                    normals.setY(i, -normals.getY(i));
+                    normals.setZ(i, -normals.getZ(i));
+                }
+                normals.needsUpdate = true;
+            }
+
+            geometry.computeBoundingBox();
+            const size = new THREE.Vector3();
+            geometry.boundingBox.getSize(size);
+            meshScale = 150 / Math.max(size.x, size.y, size.z);
+            geometry.scale(meshScale, meshScale, meshScale);
+
+            // Store volume physical size and center offset for slice alignment
+            if (data.volumePhysicalSize) {
+                volumePhysicalSize = data.volumePhysicalSize;
+            }
+            // Get centerOffset from the current mesh (tells us where mesh was before centering)
+            if (data.mesh && data.mesh.centerOffset) {
+                meshCenterOffset = data.mesh.centerOffset;
+            }
+
+            const opacity = parseFloat(document.getElementById('slider-opacity').value);
+            const wireframe = document.getElementById('toggle-wireframe').classList.contains('on');
+            const isSolid = document.getElementById('toggle-solid').classList.contains('on');
+            const colors = colorSchemes[currentScheme];
+
+            let material;
+            if (isSolid) {
+                // Solid mode - use simple Lambert material with DoubleSide for proper occlusion
+                material = new THREE.MeshLambertMaterial({
+                    color: colors.brain,
+                    side: THREE.DoubleSide,
+                    wireframe: wireframe,
+                    depthTest: true,
+                    depthWrite: true,
+                    emissive: colors.emissive,
+                    emissiveIntensity: 0.1
+                });
+            } else {
+                // Normal transparent mode
+                material = new THREE.MeshPhysicalMaterial({
+                    color: colors.brain,
+                    transparent: true,
+                    opacity: opacity,
+                    side: THREE.FrontSide,
+                    roughness: 0.4,
+                    metalness: 0.1,
+                    clearcoat: 0.3,
+                    clearcoatRoughness: 0.2,
+                    wireframe: wireframe,
+                    depthWrite: true,
+                    emissive: colors.emissive,
+                    emissiveIntensity: 0.15
+                });
+            }
+
+            brainMesh = new THREE.Mesh(geometry, material);
+            brainMesh.rotation.x = -Math.PI / 2;
+            scene.add(brainMesh);
+            brainMeshBack = null;
+
+            // Update brain bounds for slice plane positioning
+            // Note: brain mesh has rotation.x = -Math.PI/2, which swaps Y and Z
+            geometry.computeBoundingBox();
+            const box = geometry.boundingBox;
+            brainBox = {
+                minX: box.min.x, maxX: box.max.x,
+                minY: box.min.z, maxY: box.max.z,  // Z becomes Y after rotation
+                minZ: -box.max.y, maxZ: -box.min.y  // Y becomes -Z after rotation
+            };
+
+            document.getElementById('stat-verts').textContent = (data.mesh.vertexCount / 1000).toFixed(0) + 'K';
+            document.getElementById('stat-faces').textContent = (data.mesh.faceCount / 1000).toFixed(0) + 'K';
+        }
+
+        function updateSlices() {
+            if (!mriData || !mriData.slices) return;
+
+            ['axial', 'sagittal', 'coronal'].forEach(axis => {
+                const slider = document.getElementById('slider-' + axis);
+                const slices = mriData.slices[axis];
+                slider.max = slices.length - 1;
+                slider.value = Math.floor(slices.length / 2);
+                showSlice(axis, parseInt(slider.value));
+            });
+        }
+
+        function showSlice(axis, idx) {
+            const slices = mriData.slices[axis];
+            if (!slices || !slices[idx]) return;
+
+            const slice = slices[idx];
+            document.getElementById('img-' + axis).src = 'data:image/png;base64,' + slice.data;
+            document.getElementById('idx-' + axis).textContent = slice.index + ' / ' + slice.total;
+
+            // Update 3D plane if visible
+            if (slicePlanes[axis]) {
+                updateSlicePlaneTexture(axis, slice.data);
+                updateSlicePlanePosition(axis, slice.index, slice.total);
+            }
+        }
+
+        function createSlicePlane(axis) {
+            if (!mriData || !mriData.slices) return;
+
+            const slices = mriData.slices[axis];
+            const slider = document.getElementById('slider-' + axis);
+            const currentIdx = parseInt(slider.value);
+            const slice = slices[currentIdx];
+
+            if (!slice) return;
+
+            // Create texture from slice image with transparent background
+            const img = new Image();
+            img.onload = () => {
+                // Process image to make black pixels transparent
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+
+                // Convert grayscale to RGBA with transparency for dark pixels
+                for (let i = 0; i < data.length; i += 4) {
+                    const brightness = data[i]; // Grayscale, so R=G=B
+                    // Make dark pixels transparent (threshold at ~15% brightness)
+                    if (brightness < 40) {
+                        data[i + 3] = 0; // Fully transparent
+                    } else {
+                        data[i + 3] = Math.min(255, brightness + 50); // Semi-transparent based on brightness
+                    }
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.needsUpdate = true;
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                sliceTextures[axis] = texture;
+
+                // Size slice plane to match full volume extent (same scale as mesh)
+                // volumePhysicalSize = [X, Y, Z] in original volume coordinates
+                // After mesh rotation (-PI/2 on X): screen X=volX, screen Y=volZ, screen Z=-volY
+                let planeWidth, planeHeight;
+                if (volumePhysicalSize && meshScale) {
+                    if (axis === 'axial') {
+                        // Axial shows X (width) vs Y (height) of volume, plane lies in screen XZ
+                        planeWidth = volumePhysicalSize[0] * meshScale;
+                        planeHeight = volumePhysicalSize[1] * meshScale;
+                    } else if (axis === 'sagittal') {
+                        // Sagittal shows Y (width) vs Z (height) of volume
+                        planeWidth = volumePhysicalSize[1] * meshScale;
+                        planeHeight = volumePhysicalSize[2] * meshScale;
+                    } else {
+                        // Coronal shows X (width) vs Z (height) of volume
+                        planeWidth = volumePhysicalSize[0] * meshScale;
+                        planeHeight = volumePhysicalSize[2] * meshScale;
+                    }
+                } else {
+                    // Fallback to brainBox
+                    if (axis === 'axial') {
+                        planeWidth = (brainBox.maxX - brainBox.minX);
+                        planeHeight = (brainBox.maxZ - brainBox.minZ);
+                    } else if (axis === 'sagittal') {
+                        planeWidth = (brainBox.maxZ - brainBox.minZ);
+                        planeHeight = (brainBox.maxY - brainBox.minY);
+                    } else {
+                        planeWidth = (brainBox.maxX - brainBox.minX);
+                        planeHeight = (brainBox.maxY - brainBox.minY);
+                    }
+                }
+                const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+
+                const material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    opacity: 0.9,
+                    side: THREE.DoubleSide,
+                    depthWrite: false,
+                    alphaTest: 0.05
+                });
+
+                const plane = new THREE.Mesh(geometry, material);
+                plane.renderOrder = 10;
+
+                // Position and rotate based on axis
+                if (axis === 'axial') {
+                    plane.rotation.x = -Math.PI / 2;
+                } else if (axis === 'sagittal') {
+                    plane.rotation.y = Math.PI / 2;
+                } else if (axis === 'coronal') {
+                    // Default orientation
+                }
+
+                updateSlicePlanePosition(axis, slice.index, slice.total, plane);
+
+                slicePlanes[axis] = plane;
+                scene.add(plane);
+            };
+            img.src = 'data:image/png;base64,' + slice.data;
+        }
+
+        function updateSlicePlaneTexture(axis, base64Data) {
+            const img = new Image();
+            img.onload = () => {
+                if (sliceTextures[axis]) {
+                    // Process image to make black pixels transparent
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+
+                    for (let i = 0; i < data.length; i += 4) {
+                        const brightness = data[i];
+                        if (brightness < 40) {
+                            data[i + 3] = 0;
+                        } else {
+                            data[i + 3] = Math.min(255, brightness + 50);
+                        }
+                    }
+
+                    ctx.putImageData(imageData, 0, 0);
+
+                    sliceTextures[axis].image = canvas;
+                    sliceTextures[axis].needsUpdate = true;
+                }
+            };
+            img.src = 'data:image/png;base64,' + base64Data;
+        }
+
+        function updateSlicePlanePosition(axis, idx, total, plane = null) {
+            const targetPlane = plane || slicePlanes[axis];
+            if (!targetPlane) return;
+
+            // t goes from 0 to 1 across the full slice range
+            const t = total > 1 ? idx / (total - 1) : 0.5;
+
+            // Use volumePhysicalSize and centerOffset for proper alignment
+            // Formula: screenPos = (originalPos - centerOffset) * meshScale
+            // originalPos = t * volumePhysicalSize[axis]
+            if (volumePhysicalSize && meshCenterOffset && meshScale) {
+                // volumePhysicalSize = [X, Y, Z] in volume coords
+                // meshCenterOffset = [X, Y, Z] - where mesh center was before centering
+                // Mesh has rotation.x = -PI/2, so:
+                //   screen X = volume X
+                //   screen Y = volume Z
+                //   screen Z = -volume Y
+
+                if (axis === 'axial') {
+                    // Axial slices move along volume Z axis (which becomes screen Y)
+                    const volumeZ = t * volumePhysicalSize[2];
+                    const screenY = (volumeZ - meshCenterOffset[2]) * meshScale;
+                    targetPlane.position.set(0, screenY, 0);
+                } else if (axis === 'sagittal') {
+                    // Sagittal slices move along volume X axis (which stays screen X)
+                    const volumeX = t * volumePhysicalSize[0];
+                    const screenX = (volumeX - meshCenterOffset[0]) * meshScale;
+                    targetPlane.position.set(screenX, 0, 0);
+                } else if (axis === 'coronal') {
+                    // Coronal slices move along volume Y axis (which becomes screen -Z)
+                    const volumeY = t * volumePhysicalSize[1];
+                    const screenZ = -(volumeY - meshCenterOffset[1]) * meshScale;
+                    targetPlane.position.set(0, 0, screenZ);
+                }
+            } else {
+                // Fallback to brainBox-based positioning
+                const centerX = (brainBox.minX + brainBox.maxX) / 2;
+                const centerY = (brainBox.minY + brainBox.maxY) / 2;
+                const centerZ = (brainBox.minZ + brainBox.maxZ) / 2;
+
+                if (axis === 'axial') {
+                    const posY = brainBox.minY + t * (brainBox.maxY - brainBox.minY);
+                    targetPlane.position.set(centerX, posY, centerZ);
+                } else if (axis === 'sagittal') {
+                    const posX = brainBox.minX + t * (brainBox.maxX - brainBox.minX);
+                    targetPlane.position.set(posX, centerY, centerZ);
+                } else if (axis === 'coronal') {
+                    const posZ = brainBox.minZ + t * (brainBox.maxZ - brainBox.minZ);
+                    targetPlane.position.set(centerX, centerY, posZ);
+                }
+            }
+        }
+
+        function removeSlicePlane(axis) {
+            if (slicePlanes[axis]) {
+                scene.remove(slicePlanes[axis]);
+                slicePlanes[axis].geometry.dispose();
+                slicePlanes[axis].material.dispose();
+                if (sliceTextures[axis]) {
+                    sliceTextures[axis].dispose();
+                }
+                slicePlanes[axis] = null;
+                sliceTextures[axis] = null;
+            }
+        }
+
+        function toggleSlicePlane(axis) {
+            const toggle = document.getElementById('toggle-plane-' + axis);
+            const isOn = toggle.classList.toggle('on');
+
+            if (isOn) {
+                createSlicePlane(axis);
+            } else {
+                removeSlicePlane(axis);
+            }
+        }
+
+        function updateProgress(step, percent) {
+            document.getElementById('processing-step').textContent = step;
+            document.getElementById('progress-fill').style.width = percent + '%';
+            currentProgress = percent;
+        }
+
+        // Slow progress creep to reassure user during long operations
+        let progressCreepInterval = null;
+        let currentProgress = 0;
+
+        function startProgressCreep(startPercent, maxPercent) {
+            currentProgress = startPercent;
+            stopProgressCreep();
+            progressCreepInterval = setInterval(() => {
+                if (currentProgress < maxPercent) {
+                    currentProgress += 0.5;
+                    document.getElementById('progress-fill').style.width = currentProgress + '%';
+                }
+            }, 500);
+        }
+
+        function stopProgressCreep() {
+            if (progressCreepInterval) {
+                clearInterval(progressCreepInterval);
+                progressCreepInterval = null;
+            }
+        }
+
+        function clearSliceStack() {
+            const stack = document.getElementById('slice-stack');
+            stack.innerHTML = '';
+        }
+
+        function buildSliceStack(slices, totalLayers = 12) {
+            const stack = document.getElementById('slice-stack');
+            stack.innerHTML = '';
+
+            // Use evenly spaced slices from the axial view
+            const step = Math.floor(slices.length / totalLayers);
+            const selectedSlices = [];
+            for (let i = 0; i < totalLayers; i++) {
+                const idx = Math.min(i * step, slices.length - 1);
+                selectedSlices.push(slices[idx]);
+            }
+
+            // Create slice layers
+            selectedSlices.forEach((slice, i) => {
+                const layer = document.createElement('div');
+                layer.className = 'slice-layer';
+                layer.style.setProperty('--z-offset', (i * 8) + 'px');
+
+                const img = document.createElement('img');
+                img.src = 'data:image/png;base64,' + slice.data;
+                layer.appendChild(img);
+
+                stack.appendChild(layer);
+            });
+
+            return selectedSlices.length;
+        }
+
+        async function animateSliceLayers(count) {
+            const layers = document.querySelectorAll('.slice-layer');
+            for (let i = 0; i < layers.length; i++) {
+                layers[i].classList.add('visible');
+                await new Promise(r => setTimeout(r, 80));
+            }
+        }
+
+        async function uploadFile(file) {
+            // Clear demo filename (this is a user upload)
+            currentDemoFilename = null;
+
+            // Hide welcome, show processing
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('processing-screen').classList.remove('hidden');
+            document.getElementById('processing-subtitle').classList.add('hidden');
+            document.getElementById('download-info').classList.add('hidden');
+
+            // Clear previous slices
+            clearSliceStack();
+
+            updateProgress('Reading volume data...', 10);
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                updateProgress('Processing MRI scan...', 25);
+
+                const response = await fetch(`${API_BASE}/process`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Upload failed');
+                }
+
+                updateProgress('Analyzing slices...', 40);
+                mriData = await response.json();
+                volumeData = mriData.volume;
+                precomputedMeshes = null;  // User uploads don't have pre-computed meshes
+
+                // Build and animate the slice stack
+                if (mriData.slices && mriData.slices.axial) {
+                    updateProgress('Building layer stack...', 50);
+                    const layerCount = buildSliceStack(mriData.slices.axial, 14);
+
+                    await new Promise(r => setTimeout(r, 200));
+
+                    // Animate slices appearing layer by layer
+                    updateProgress('Reconstructing volume...', 60);
+                    await animateSliceLayers(layerCount);
+                }
+
+                updateProgress('Extracting 3D mesh...', 75);
+                startProgressCreep(75, 89);
+                await new Promise(r => setTimeout(r, 400));
+
+                const threshold = parseFloat(document.getElementById('slider-threshold').value);
+                await extractMesh(threshold);
+
+                stopProgressCreep();
+                updateProgress('Finalizing model...', 90);
+                await new Promise(r => setTimeout(r, 300));
+
+                updateSlices();
+                document.getElementById('stat-dims').textContent = mriData.dimensions.join(' x ');
+
+                updateProgress('Complete', 100);
+                await new Promise(r => setTimeout(r, 600));
+
+                // Show main app
+                document.getElementById('processing-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.add('visible');
+
+                // Save and broadcast MRI data if in a session
+                if (inSession && ws) {
+                    saveSessionState();
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                stopProgressCreep();
+                alert('Processing failed: ' + error.message);
+                document.getElementById('processing-screen').classList.add('hidden');
+                document.getElementById('welcome-screen').classList.remove('hidden');
+            }
+        }
+
+        // Demo preloading cache
+        const demoCache = {};
+        const demoFiles = ['brain1.nii.gz', 'brain2.nii.gz', 'brain3.nii.gz', 'Iguana.nii.gz'];
+        const DEMO_VERSION = 'v2';  // Increment this to bust browser cache
+
+        async function preloadDemos() {
+            console.log('Preloading demos in background...');
+            for (const filename of demoFiles) {
+                try {
+                    const response = await fetch(`${API_BASE}/demos/processed/${filename}?${DEMO_VERSION}`);
+                    if (response.ok) {
+                        demoCache[filename] = await response.json();
+                        console.log(`Preloaded: ${filename}`);
+                    }
+                } catch (e) {
+                    console.log(`Failed to preload ${filename}:`, e);
+                }
+            }
+            console.log('Demo preloading complete');
+        }
+
+        async function loadDemo(filename) {
+            // Track demo filename for efficient session sharing
+            currentDemoFilename = filename;
+
+            // Hide welcome, show processing
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('processing-screen').classList.remove('hidden');
+            document.getElementById('processing-subtitle').classList.add('hidden');
+            document.getElementById('download-info').classList.add('hidden');
+            clearSliceStack();
+
+            updateProgress('Loading demo scan...', 20);
+
+            try {
+                let data;
+
+                // Use cached data if available (instant!)
+                if (demoCache[filename]) {
+                    console.log('Using cached demo:', filename);
+                    data = demoCache[filename];
+                } else {
+                    // Fallback to fetching with cache-busting
+                    const response = await fetch(`${API_BASE}/demos/processed/${filename}?${DEMO_VERSION}`);
+                    if (!response.ok) {
+                        throw new Error('Failed to load demo');
+                    }
+                    data = await response.json();
+                }
+
+                updateProgress('Loading data...', 50);
+
+                console.log('Demo data loaded:', {
+                    hasMeshes: !!data.meshes,
+                    meshKeys: data.meshes ? Object.keys(data.meshes) : 'none',
+                    hasMesh: !!data.mesh,
+                    hasVolume: !!data.volume,
+                    keys: Object.keys(data)
+                });
+
+                mriData = data;
+                volumeData = data.volume;
+                precomputedMeshes = data.meshes || null;  // Pre-computed meshes at multiple thresholds
+
+                console.log('precomputedMeshes set to:', precomputedMeshes ? Object.keys(precomputedMeshes) : 'null');
+
+                // Store volume physical size for slice alignment
+                volumePhysicalSize = data.volumePhysicalSize || null;
+
+                // Get mesh center offset from the default mesh (0.3 threshold)
+                if (precomputedMeshes && precomputedMeshes['0.3'] && precomputedMeshes['0.3'].centerOffset) {
+                    meshCenterOffset = precomputedMeshes['0.3'].centerOffset;
+                } else if (data.mesh && data.mesh.centerOffset) {
+                    meshCenterOffset = data.mesh.centerOffset;
+                } else {
+                    meshCenterOffset = null;
+                }
+
+                updateProgress('Building view...', 70);
+
+                // Build slice stack animation
+                if (data.slices && data.slices.axial) {
+                    const layerCount = buildSliceStack(data.slices.axial, 14);
+                    await new Promise(r => setTimeout(r, 100));
+                    await animateSliceLayers(layerCount);
+                }
+
+                updateProgress('Rendering 3D model...', 85);
+
+                // Apply pre-built mesh directly
+                if (data.mesh) {
+                    applyPrebuiltMesh(data.mesh);
+                }
+
+                updateSlices();
+                document.getElementById('stat-dims').textContent = data.dimensions.join(' x ');
+
+                updateProgress('Complete', 100);
+                await new Promise(r => setTimeout(r, 300));
+
+                document.getElementById('processing-subtitle').classList.add('hidden');
+                document.getElementById('processing-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.add('visible');
+
+                if (inSession && ws) {
+                    saveSessionState();
+                }
+
+            } catch (error) {
+                console.error('Demo load error:', error);
+                alert('Failed to load demo: ' + error.message);
+                document.getElementById('processing-subtitle').classList.add('hidden');
+                document.getElementById('processing-screen').classList.add('hidden');
+                document.getElementById('welcome-screen').classList.remove('hidden');
+            }
+        }
+
+        function applyPrebuiltMesh(meshData) {
+            // Cache mesh for session sharing
+            currentMeshData = meshData;
+
+            // Remove existing brain mesh
+            const existing = scene.getObjectByName('brainMesh');
+            if (existing) scene.remove(existing);
+
+            const geometry = new THREE.BufferGeometry();
+            const vertices = new Float32Array(meshData.vertices.flat());
+            const indices = new Uint32Array(meshData.faces.flat());
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+            geometry.computeVertexNormals();
+
+            // Scale mesh to consistent size (same as renderBrain does for uploads)
+            geometry.computeBoundingBox();
+            const size = new THREE.Vector3();
+            geometry.boundingBox.getSize(size);
+            const scale = 150 / Math.max(size.x, size.y, size.z);
+            geometry.scale(scale, scale, scale);
+
+            const colors = colorSchemes[currentScheme];
+            const opacitySlider = document.getElementById('slider-opacity');
+            const wireframeToggle = document.getElementById('toggle-wireframe');
+
+            const material = new THREE.MeshPhongMaterial({
+                color: colors.brain,
+                emissive: colors.emissive,
+                emissiveIntensity: 0.1,
+                transparent: true,
+                opacity: opacitySlider ? parseFloat(opacitySlider.value) : 0.9,
+                wireframe: wireframeToggle ? wireframeToggle.classList.contains('on') : false,
+                side: THREE.DoubleSide
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.name = 'brainMesh';
+            mesh.rotation.x = -Math.PI / 2;  // Rotate to correct orientation
+            scene.add(mesh);
+            brainMesh = mesh;  // Store reference for color scheme changes
+
+            console.log('Pre-built mesh applied:', meshData.vertexCount, 'vertices');
+        }
+
+        async function extractMesh(threshold, resolution = null, forceSolid = null) {
+            console.log('extractMesh called - threshold:', threshold, 'precomputedMeshes:', !!precomputedMeshes, 'keys:', precomputedMeshes ? Object.keys(precomputedMeshes) : 'none');
+            if (!volumeData) {
+                console.log('No volume data, returning');
+                return;
+            }
+            if (isExtracting) {
+                console.log('Already extracting, returning');
+                return;
+            }
+
+            // Get resolution from slider if not provided
+            if (resolution === null) {
+                resolution = parseInt(document.getElementById('slider-meshdetail').value);
+            }
+            // Get solid mode from toggle if not provided
+            const isSolid = forceSolid !== null ? forceSolid : document.getElementById('toggle-solid').classList.contains('on');
+
+            // Check for pre-computed meshes first (instant!) - for demos
+            if (precomputedMeshes && !isSolid) {
+                const availableThresholds = Object.keys(precomputedMeshes).map(Number).sort((a, b) => a - b);
+                // Find closest pre-computed threshold
+                let closestThreshold = availableThresholds[0];
+                let minDiff = Math.abs(threshold - closestThreshold);
+                for (const t of availableThresholds) {
+                    const diff = Math.abs(threshold - t);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestThreshold = t;
+                    }
+                }
+                const meshData = precomputedMeshes[String(closestThreshold)];
+                if (meshData) {
+                    console.log(`Using pre-computed mesh at threshold ${closestThreshold} (requested: ${threshold})`);
+                    currentMeshData = meshData;
+                    renderBrain({ mesh: meshData });
+                    return;
+                }
+            }
+
+            // Check cache next - instant if we have it
+            const cacheKey = `${threshold.toFixed(2)}_${resolution}_${isSolid}`;
+            if (meshCache.has(cacheKey)) {
+                console.log('Cache hit for', cacheKey);
+                const meshData = meshCache.get(cacheKey);
+                currentMeshData = meshData;
+                renderBrain({ mesh: meshData });
+                return;
+            }
+
+            isExtracting = true;
+            document.getElementById('mesh-loading').classList.add('visible');
+            console.log('Server-side mesh extraction - threshold:', threshold, 'resolution:', resolution, 'solid:', isSolid);
+
+            const progressText = document.getElementById('mesh-progress-text');
+            const progressFill = document.getElementById('mesh-progress-fill');
+            progressText.textContent = 'Generating mesh...';
+            progressFill.style.width = '0%';
+
+            try {
+                const response = await fetch(`${API_BASE}/extract-mesh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        volume: volumeData.data,
+                        shape: volumeData.shape,
+                        voxelSize: volumeData.voxelSize,
+                        threshold: threshold,
+                        resolution: resolution,
+                        solid: isSolid
+                    })
+                });
+                if (!response.ok) throw new Error('Mesh extraction failed');
+
+                // Track download progress
+                const contentLength = response.headers.get('content-length');
+                const total = contentLength ? parseInt(contentLength, 10) : 0;
+                let received = 0;
+
+                const reader = response.body.getReader();
+                const chunks = [];
+
+                progressText.textContent = 'Downloading...';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    chunks.push(value);
+                    received += value.length;
+
+                    // Update progress
+                    const receivedMB = (received / 1024 / 1024).toFixed(1);
+                    if (total > 0) {
+                        const totalMB = (total / 1024 / 1024).toFixed(1);
+                        const percent = (received / total) * 100;
+                        progressText.textContent = `${receivedMB} / ${totalMB} MB`;
+                        progressFill.style.width = `${percent}%`;
+                    } else {
+                        progressText.textContent = `${receivedMB} MB`;
+                        progressFill.style.width = '50%';
+                    }
+                }
+
+                // Combine chunks and parse JSON
+                const chunksAll = new Uint8Array(received);
+                let position = 0;
+                for (const chunk of chunks) {
+                    chunksAll.set(chunk, position);
+                    position += chunk.length;
+                }
+                const jsonString = new TextDecoder('utf-8').decode(chunksAll);
+                const meshData = JSON.parse(jsonString);
+
+                console.log('Server mesh - vertices:', meshData.vertexCount, 'faces:', meshData.faceCount);
+
+                // Cache the result
+                meshCache.set(cacheKey, meshData);
+
+                currentMeshData = meshData;
+                renderBrain({ mesh: meshData });
+
+            } catch (error) {
+                console.error('Mesh extraction error:', error);
+            } finally {
+                isExtracting = false;
+                document.getElementById('mesh-loading').classList.remove('visible');
+            }
+        }
+
+        function resetToWelcome() {
+            if (brainMesh) {
+                scene.remove(brainMesh);
+                brainMesh.geometry.dispose();
+                brainMesh.material.dispose();
+                brainMesh = null;
+            }
+            if (brainMeshBack) {
+                scene.remove(brainMeshBack);
+                brainMeshBack.geometry.dispose();
+                brainMeshBack.material.dispose();
+                brainMeshBack = null;
+            }
+
+            // Remove slice planes
+            ['axial', 'sagittal', 'coronal'].forEach(axis => {
+                removeSlicePlane(axis);
+                document.getElementById('toggle-plane-' + axis).classList.remove('on');
+            });
+
+            mriData = null;
+            volumeData = null;
+            precomputedMeshes = null;
+            currentDemoFilename = null;
+            meshCache.clear();
+
+            // Clear all annotations when resetting
+            clearAllAnnotations();
+
+            document.getElementById('main-app').classList.remove('visible');
+            document.getElementById('welcome-screen').classList.remove('hidden');
+        }
+
+        // Annotation functions
+        function onCanvasClick(event) {
+            if (!annotationMode || !brainMesh) return;
+
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(brainMesh);
+
+            if (intersects.length > 0) {
+                const hitPoint = intersects[0].point;
+                createAnnotation(hitPoint);
+            }
+        }
+
+        function createAnnotation(position, label = '', size = 2.5, comment = '') {
+            const id = 'ann_' + (++annotationIdCounter);
+
+            // Create marker sphere
+            const geometry = new THREE.SphereGeometry(size, 16, 16);
+            const material = new THREE.MeshBasicMaterial({
+                color: annotationColor,
+                depthTest: true
+            });
+            const marker = new THREE.Mesh(geometry, material);
+            marker.position.copy(position);
+            marker.renderOrder = 100;
+            scene.add(marker);
+
+            const finalLabel = label || 'Marker ' + annotationIdCounter;
+
+            // Store annotation
+            annotations[id] = {
+                mesh: marker,
+                position: position.clone(),
+                color: annotationColor,
+                label: finalLabel,
+                size: size,
+                comment: comment
+            };
+
+            updateAnnotationList();
+
+            // Broadcast to viewers
+            broadcastState('annotationAdd', {
+                annotationAdd: {
+                    id: id,
+                    position: { x: position.x, y: position.y, z: position.z },
+                    color: annotationColor,
+                    label: finalLabel,
+                    size: size,
+                    comment: comment
+                }
+            });
+
+            return id;
+        }
+
+        function resizeAnnotation(id, newSize) {
+            if (annotations[id]) {
+                // Clamp size between 1 and 8
+                newSize = Math.max(1, Math.min(8, newSize));
+
+                const ann = annotations[id];
+                ann.size = newSize;
+
+                // Remove old mesh
+                scene.remove(ann.mesh);
+                ann.mesh.geometry.dispose();
+
+                // Create new geometry with new size
+                const geometry = new THREE.SphereGeometry(newSize, 16, 16);
+                ann.mesh.geometry = geometry;
+                scene.add(ann.mesh);
+
+                updateAnnotationList();
+
+                // Broadcast change
+                broadcastState('annotationResize', {
+                    annotationResize: { id: id, size: newSize }
+                });
+            }
+        }
+
+        function updateAnnotationComment(id, comment) {
+            if (annotations[id]) {
+                annotations[id].comment = comment;
+
+                // Broadcast change
+                broadcastState('annotationComment', {
+                    annotationComment: { id: id, comment: comment }
+                });
+            }
+        }
+
+        // Tooltip for hovering over annotation markers
+        let hoveredAnnotation = null;
+
+        function onCanvasMouseMove(event) {
+            if (!brainMesh) return;
+
+            const tooltip = document.getElementById('annotation-tooltip');
+            const tooltipLabel = document.getElementById('tooltip-label');
+            const tooltipComment = document.getElementById('tooltip-comment');
+
+            if (!tooltip || !tooltipLabel || !tooltipComment) return;
+
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            // Check intersection with all annotation markers
+            const markerMeshes = Object.entries(annotations).map(([id, ann]) => {
+                ann.mesh.userData.annotationId = id;
+                return ann.mesh;
+            });
+
+            if (markerMeshes.length === 0) {
+                hideAnnotationTooltip();
+                return;
+            }
+
+            const intersects = raycaster.intersectObjects(markerMeshes);
+
+            if (intersects.length > 0) {
+                const hitMesh = intersects[0].object;
+                const annId = hitMesh.userData.annotationId;
+                const ann = annotations[annId];
+
+                if (ann) {
+                    hoveredAnnotation = annId;
+                    tooltipLabel.textContent = ann.label;
+
+                    if (ann.comment && ann.comment.trim()) {
+                        tooltipComment.textContent = ann.comment;
+                        tooltipComment.className = 'annotation-tooltip-comment';
+                    } else {
+                        tooltipComment.textContent = 'No comment';
+                        tooltipComment.className = 'annotation-tooltip-nocomment';
+                    }
+
+                    // Position tooltip near cursor
+                    tooltip.style.left = (event.clientX + 15) + 'px';
+                    tooltip.style.top = (event.clientY + 15) + 'px';
+                    tooltip.classList.add('visible');
+                }
+            } else {
+                hideAnnotationTooltip();
+            }
+        }
+
+        function hideAnnotationTooltip() {
+            hoveredAnnotation = null;
+            const tooltip = document.getElementById('annotation-tooltip');
+            if (tooltip) tooltip.classList.remove('visible');
+        }
+
+        function deleteAnnotation(id) {
+            if (annotations[id]) {
+                scene.remove(annotations[id].mesh);
+                annotations[id].mesh.geometry.dispose();
+                annotations[id].mesh.material.dispose();
+                delete annotations[id];
+                updateAnnotationList();
+
+                // Broadcast to viewers
+                broadcastState('annotationDelete', { annotationDelete: id });
+            }
+        }
+
+        function clearAllAnnotations() {
+            Object.keys(annotations).forEach(id => deleteAnnotation(id));
+        }
+
+        function updateAnnotationList() {
+            const list = document.getElementById('annotation-list');
+            list.innerHTML = '';
+
+            Object.entries(annotations).forEach(([id, ann]) => {
+                const item = document.createElement('div');
+                item.className = 'annotation-item';
+                const size = ann.size || 2.5;
+                const comment = ann.comment || '';
+                item.innerHTML = `
+                    <div class="ann-header">
+                        <span class="ann-color" style="background:${ann.color}"></span>
+                        <span class="ann-label">${ann.label}</span>
+                        <span class="ann-delete" data-id="${id}">&times;</span>
+                    </div>
+                    <textarea class="ann-comment" data-id="${id}" placeholder="Add a comment...">${comment}</textarea>
+                    <div class="ann-size-row">
+                        <span class="ann-size-label">Size</span>
+                        <button class="ann-size-btn" data-id="${id}" data-action="decrease">−</button>
+                        <span class="ann-size-value">${size.toFixed(1)}</span>
+                        <button class="ann-size-btn" data-id="${id}" data-action="increase">+</button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            // Add click handlers for delete buttons
+            list.querySelectorAll('.ann-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    deleteAnnotation(e.target.dataset.id);
+                });
+            });
+
+            // Add click handlers for size buttons
+            list.querySelectorAll('.ann-size-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    const action = e.target.dataset.action;
+                    const ann = annotations[id];
+                    if (ann) {
+                        const currentSize = ann.size || 2.5;
+                        const newSize = action === 'increase' ? currentSize + 0.5 : currentSize - 0.5;
+                        resizeAnnotation(id, newSize);
+                    }
+                });
+            });
+
+            // Add change handlers for comments
+            list.querySelectorAll('.ann-comment').forEach(textarea => {
+                textarea.addEventListener('change', (e) => {
+                    updateAnnotationComment(e.target.dataset.id, e.target.value);
+                });
+                // Also save on blur
+                textarea.addEventListener('blur', (e) => {
+                    updateAnnotationComment(e.target.dataset.id, e.target.value);
+                });
+            });
+        }
+
+        // ============== Collaboration Functions ==============
+
+        function updateStatusText() {
+            document.getElementById('status-text').textContent = editorCount + '/4 Editing';
+        }
+
+        async function createSession() {
+            try {
+                console.log('Creating session, API_BASE:', API_BASE);
+                const response = await fetch(API_BASE + '/session/create', { method: 'POST' });
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Session data:', data);
+                sessionId = data.session_id;
+
+                if (!sessionId) {
+                    throw new Error('No session_id in response');
+                }
+
+                inSession = true;
+                isSessionCreator = true;  // Mark as creator to prevent reload loop
+
+                // Update URL with session ID
+                const url = new URL(window.location.href);
+                url.searchParams.set('session', sessionId);
+                window.history.replaceState({}, '', url);
+
+                // Connect WebSocket as editor
+                connectWebSocket();
+
+                // Save state immediately so others can fetch it
+                setTimeout(() => {
+                    saveSessionState();
+                    console.log('Initial state saved for session');
+                }, 500);
+
+                // Show share modal
+                showShareModal();
+
+            } catch (error) {
+                console.error('Failed to create session:', error);
+                alert('Failed to create session: ' + error.message);
+            }
+        }
+
+        async function joinSession(id) {
+            sessionId = id;
+            inSession = true;
+
+            // Show joining screen
+            document.getElementById('joining-screen').classList.remove('hidden');
+
+            // Check if session exists and has room
+            try {
+                const response = await fetch(API_BASE + '/session/' + id + '/exists');
+                const data = await response.json();
+
+                if (!data.exists) {
+                    document.getElementById('joining-screen').classList.add('hidden');
+                    alert('Session not found.');
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('session');
+                    window.history.replaceState({}, '', url);
+                    return;
+                }
+
+                if (!data.canJoin) {
+                    document.getElementById('joining-screen').classList.add('hidden');
+                    alert('Session is full (max 4 editors).');
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('session');
+                    window.history.replaceState({}, '', url);
+                    return;
+                }
+
+                // Connect WebSocket as editor
+                connectWebSocket();
+
+            } catch (error) {
+                document.getElementById('joining-screen').classList.add('hidden');
+                console.error('Failed to join session:', error);
+                alert('Failed to join session. Is the server running?');
+            }
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket(WS_BASE + '/ws/' + sessionId);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected to session');
+                ws.send(JSON.stringify({ type: 'join' }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWSMessage(data);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                ws = null;
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function handleWSMessage(data) {
+            switch (data.type) {
+                case 'connected':
+                    editorCount = data.editorCount || 1;
+                    updateStatusText();
+                    document.getElementById('editor-count-display').textContent = editorCount;
+
+                    // If we're the session creator, we already have the data - don't reload
+                    if (isSessionCreator && mriData) {
+                        console.log('Session creator connected - keeping current view');
+                        document.getElementById('joining-screen').classList.add('hidden');
+                        break;
+                    }
+
+                    // For joiners: show loading screen and fetch state
+                    document.getElementById('joining-screen').classList.add('hidden');
+                    document.getElementById('welcome-screen').classList.add('hidden');
+                    document.getElementById('processing-screen').classList.remove('hidden');
+                    updateProgress('Connecting to session...', 10);
+                    // Fetch state via HTTP (more reliable for large MRI data)
+                    fetchSessionState();
+                    break;
+
+                case 'editor_joined':
+                    editorCount = data.editorCount;
+                    updateStatusText();
+                    document.getElementById('editor-count-display').textContent = editorCount;
+                    // Save state so new editor can get it
+                    if (mriData) {
+                        saveSessionState();
+                    }
+                    break;
+
+                case 'editor_left':
+                    editorCount = data.editorCount;
+                    updateStatusText();
+                    document.getElementById('editor-count-display').textContent = editorCount;
+                    break;
+
+                case 'error':
+                    alert(data.message || 'Session error');
+                    break;
+
+                case 'full_state':
+                    if (data.data && Object.keys(data.data).length > 0) {
+                        applyFullState(data.data);
+                    } else {
+                        fetchSessionState();
+                    }
+                    break;
+
+                case 'state_update':
+                    applyStateUpdate(data.data);
+                    break;
+            }
+        }
+
+        async function applyFullState(state) {
+            console.log('applyFullState called with keys:', Object.keys(state));
+
+            // If we created this session and already have data, don't reload
+            if (isSessionCreator && mriData) {
+                console.log('Skipping applyFullState - we are the session creator');
+                document.getElementById('processing-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.add('visible');
+                return;
+            }
+
+            isApplyingRemoteState = true;  // Prevent feedback loop
+
+            // Check if this is a demo file - load directly from server (FAST!)
+            if (state.demoFilename) {
+                console.log('Loading shared demo directly:', state.demoFilename);
+                updateProgress('Loading demo from server...', 30);
+
+                // Load demo data directly (much faster than transferring through session)
+                let data;
+                if (demoCache[state.demoFilename]) {
+                    data = demoCache[state.demoFilename];
+                } else {
+                    const response = await fetch(`${API_BASE}/demos/processed/${state.demoFilename}`);
+                    data = await response.json();
+                }
+
+                currentDemoFilename = state.demoFilename;
+                mriData = data;
+                volumeData = data.volume;
+                precomputedMeshes = data.meshes || null;
+                volumePhysicalSize = data.volumePhysicalSize || null;
+
+                if (precomputedMeshes && precomputedMeshes['0.3'] && precomputedMeshes['0.3'].centerOffset) {
+                    meshCenterOffset = precomputedMeshes['0.3'].centerOffset;
+                }
+
+                document.getElementById('stat-dims').textContent = mriData.dimensions.join(' x ');
+
+                const threshold = state.threshold || 0.3;
+                document.getElementById('slider-threshold').value = threshold;
+                document.getElementById('val-threshold').textContent = Math.round(threshold * 100) + '%';
+
+                updateProgress('Rendering 3D model...', 70);
+
+                // Use pre-computed mesh from demo (instant!)
+                if (data.mesh) {
+                    applyPrebuiltMesh(data.mesh);
+                }
+
+                updateSlices();
+            }
+            // For user uploads - use transferred data
+            else if (state.mriData && state.volumeData) {
+                console.log('Setting MRI data from shared session');
+                updateProgress('Building 3D model...', 70);
+
+                mriData = state.mriData;
+                volumeData = state.volumeData;
+                document.getElementById('stat-dims').textContent = mriData.dimensions.join(' x ');
+
+                const threshold = state.threshold || 0.5;
+                document.getElementById('slider-threshold').value = threshold;
+                document.getElementById('val-threshold').textContent = Math.round(threshold * 100) + '%';
+
+                // Extract mesh at detail 60 for shared sessions (smaller/faster)
+                console.log('Extracting mesh for shared session at detail 60...');
+                updateProgress('Rendering brain mesh...', 80);
+                startProgressCreep(80, 89);
+                await extractMesh(threshold, 60);  // Always use detail 60 for shared sessions
+                stopProgressCreep();
+
+                // Set the wireframe detail slider to 60 to match
+                document.getElementById('slider-meshdetail').value = 60;
+                document.getElementById('val-meshdetail').textContent = '60';
+                document.getElementById('fill-meshdetail').style.width = '0%';
+            }
+
+            updateProgress('Applying settings...', 90);
+
+            // Apply camera
+            if (state.camera) {
+                camera.position.set(state.camera.px, state.camera.py, state.camera.pz);
+                controls.target.set(state.camera.tx, state.camera.ty, state.camera.tz);
+                controls.update();
+            }
+
+            // Apply color scheme
+            if (state.colorScheme) {
+                applyColorScheme(state.colorScheme);
+            }
+
+            // Apply slice positions (AFTER mriData is set)
+            if (state.slices && mriData) {
+                ['axial', 'sagittal', 'coronal'].forEach(axis => {
+                    if (state.slices[axis] !== undefined) {
+                        const slider = document.getElementById('slider-' + axis);
+                        slider.value = state.slices[axis];
+                        showSlice(axis, state.slices[axis]);
+                    }
+                });
+            }
+
+            // Apply annotations
+            if (state.annotations) {
+                clearAllAnnotations();
+                Object.entries(state.annotations).forEach(([id, ann]) => {
+                    const pos = new THREE.Vector3(ann.position.x, ann.position.y, ann.position.z);
+                    annotationColor = ann.color;
+                    createAnnotationWithId(id, pos, ann.label, ann.size || 2.5, ann.comment || '');
+                });
+            }
+
+            updateProgress('Complete!', 100);
+
+            // Show main app after loading
+            await new Promise(r => setTimeout(r, 300));
+            document.getElementById('processing-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.add('visible');
+
+            // Reset flag after applying (longer delay to prevent feedback)
+            setTimeout(() => { isApplyingRemoteState = false; }, 500);
+        }
+
+        async function fetchSessionState() {
+            // Fetch full state from server via HTTP (for large MRI data)
+            if (!sessionId) return;
+
+            // Show disclaimer and download info for session joiners
+            const subtitle = document.getElementById('processing-subtitle');
+            const downloadInfo = document.getElementById('download-info');
+            subtitle.classList.remove('hidden');
+            downloadInfo.classList.remove('hidden');
+
+            updateProgress('Connecting to session...', 10);
+
+            try {
+                console.log('Fetching session state via HTTP from:', API_BASE + '/session/' + sessionId + '/state');
+                const response = await fetch(API_BASE + '/session/' + sessionId + '/state');
+                console.log('Response status:', response.status);
+
+                if (response.ok) {
+                    // Use streaming to track download progress
+                    const contentLength = response.headers.get('content-length');
+                    const total = contentLength ? parseInt(contentLength, 10) : 0;
+                    let received = 0;
+                    let lastProgressUpdate = 0;
+
+                    updateProgress('Downloading MRI data...', 20);
+
+                    const reader = response.body.getReader();
+                    const chunks = [];
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        chunks.push(value);
+                        received += value.length;
+
+                        // Throttle progress updates to every 150ms for smooth animation
+                        const now = Date.now();
+                        if (now - lastProgressUpdate > 150) {
+                            lastProgressUpdate = now;
+                            const receivedMB = (received / 1024 / 1024).toFixed(1);
+                            if (total > 0) {
+                                const totalMB = (total / 1024 / 1024).toFixed(1);
+                                const percent = Math.min(20 + (received / total) * 50, 70);
+                                downloadInfo.textContent = `${receivedMB} / ${totalMB} MB`;
+                                updateProgress('Downloading MRI data...', percent);
+                            } else {
+                                downloadInfo.textContent = `${receivedMB} MB downloaded`;
+                                updateProgress('Downloading MRI data...', 40);
+                            }
+                        }
+                    }
+
+                    // Final update after download complete
+                    const receivedMB = (received / 1024 / 1024).toFixed(1);
+                    if (total > 0) {
+                        downloadInfo.textContent = `${receivedMB} / ${(total / 1024 / 1024).toFixed(1)} MB`;
+                    } else {
+                        downloadInfo.textContent = `${receivedMB} MB downloaded`;
+                    }
+
+                    // Combine chunks and parse JSON
+                    const chunksAll = new Uint8Array(received);
+                    let position = 0;
+                    for (const chunk of chunks) {
+                        chunksAll.set(chunk, position);
+                        position += chunk.length;
+                    }
+
+                    const text = new TextDecoder().decode(chunksAll);
+                    const state = JSON.parse(text);
+
+                    console.log('Received state keys:', Object.keys(state));
+                    console.log('Has mriData:', !!state.mriData);
+                    console.log('Has volumeData:', !!state.volumeData);
+
+                    if (state && Object.keys(state).length > 0) {
+                        downloadInfo.classList.add('hidden');
+                        updateProgress('Processing brain data...', 75);
+                        applyFullState(state);
+                    } else {
+                        console.log('State is empty, will retry...');
+                        downloadInfo.textContent = 'Waiting...';
+                        updateProgress('Waiting for host to share...', 30);
+                        setTimeout(fetchSessionState, 2000);
+                    }
+                } else {
+                    console.log('State not found, will retry...');
+                    downloadInfo.textContent = 'Waiting...';
+                    updateProgress('Waiting for host to share...', 30);
+                    setTimeout(fetchSessionState, 2000);
+                }
+            } catch (error) {
+                console.error('Failed to fetch session state:', error);
+                downloadInfo.textContent = 'Reconnecting...';
+                updateProgress('Reconnecting...', 20);
+                setTimeout(fetchSessionState, 2000);
+            }
+        }
+
+        function applyStateUpdate(update) {
+            // State updated notification - fetch full state from server
+            if (update.stateUpdated) {
+                fetchSessionState();
+                return;
+            }
+
+            isApplyingRemoteState = true;  // Prevent feedback loop
+
+            // Camera update
+            if (update.camera) {
+                camera.position.set(update.camera.px, update.camera.py, update.camera.pz);
+                controls.target.set(update.camera.tx, update.camera.ty, update.camera.tz);
+                controls.update();
+            }
+
+            // Annotation added
+            if (update.annotationAdd) {
+                const ann = update.annotationAdd;
+                const pos = new THREE.Vector3(ann.position.x, ann.position.y, ann.position.z);
+                annotationColor = ann.color;
+                createAnnotationWithId(ann.id, pos, ann.label, ann.size || 2.5, ann.comment || '');
+            }
+
+            // Annotation deleted
+            if (update.annotationDelete) {
+                deleteAnnotation(update.annotationDelete);
+            }
+
+            // Annotation resized
+            if (update.annotationResize) {
+                const { id, size } = update.annotationResize;
+                if (annotations[id]) {
+                    annotations[id].size = size;
+                    scene.remove(annotations[id].mesh);
+                    annotations[id].mesh.geometry.dispose();
+                    const geometry = new THREE.SphereGeometry(size, 16, 16);
+                    annotations[id].mesh.geometry = geometry;
+                    scene.add(annotations[id].mesh);
+                    updateAnnotationList();
+                }
+            }
+
+            // Annotation comment updated
+            if (update.annotationComment) {
+                const { id, comment } = update.annotationComment;
+                if (annotations[id]) {
+                    annotations[id].comment = comment;
+                    updateAnnotationList();
+                }
+            }
+
+            // Slice change
+            if (update.slice) {
+                const slider = document.getElementById('slider-' + update.slice.axis);
+                slider.value = update.slice.value;
+                showSlice(update.slice.axis, update.slice.value);
+            }
+
+            // Color scheme
+            if (update.colorScheme) {
+                applyColorScheme(update.colorScheme);
+            }
+
+            // MRI data loaded
+            if (update.mriLoaded) {
+                mriData = update.mriLoaded.mriData;
+                volumeData = update.mriLoaded.volumeData;
+                updateSlices();
+                document.getElementById('stat-dims').textContent = mriData.dimensions.join(' x ');
+                extractMesh(update.mriLoaded.threshold || 0.5);
+            }
+
+            // Full state (sent when viewer joins)
+            if (update.fullState) {
+                applyFullState(update.fullState);
+            }
+
+            // Reset flag after applying (longer delay to prevent feedback loop)
+            setTimeout(() => { isApplyingRemoteState = false; }, 500);
+        }
+
+        function createAnnotationWithId(id, position, label, size = 2.5, comment = '') {
+            const geometry = new THREE.SphereGeometry(size, 16, 16);
+            const material = new THREE.MeshBasicMaterial({
+                color: annotationColor,
+                depthTest: true
+            });
+            const marker = new THREE.Mesh(geometry, material);
+            marker.position.copy(position);
+            marker.renderOrder = 100;
+            scene.add(marker);
+
+            annotations[id] = {
+                mesh: marker,
+                position: position.clone(),
+                color: annotationColor,
+                label: label,
+                size: size,
+                comment: comment
+            };
+
+            updateAnnotationList();
+        }
+
+        async function saveSessionState() {
+            if (!inSession || !sessionId) return;
+
+            // Collect all annotations
+            const annotationData = {};
+            Object.entries(annotations).forEach(([id, ann]) => {
+                annotationData[id] = {
+                    position: { x: ann.position.x, y: ann.position.y, z: ann.position.z },
+                    color: ann.color,
+                    label: ann.label,
+                    size: ann.size || 2.5,
+                    comment: ann.comment || ''
+                };
+            });
+
+            // Collect slice positions
+            const slicePositions = {};
+            ['axial', 'sagittal', 'coronal'].forEach(axis => {
+                slicePositions[axis] = parseInt(document.getElementById('slider-' + axis).value);
+            });
+
+            // Build full state
+            const fullState = {
+                camera: {
+                    px: camera.position.x,
+                    py: camera.position.y,
+                    pz: camera.position.z,
+                    tx: controls.target.x,
+                    ty: controls.target.y,
+                    tz: controls.target.z
+                },
+                colorScheme: currentScheme,
+                annotations: annotationData,
+                slices: slicePositions,
+                threshold: parseFloat(document.getElementById('slider-threshold').value)
+            };
+
+            // For demos: just send filename (joiners load from server - FAST!)
+            // For uploads: send full data (required for sharing custom files)
+            if (currentDemoFilename) {
+                // Demo file - just send the filename, joiners will load it directly
+                fullState.demoFilename = currentDemoFilename;
+                console.log('Sharing demo:', currentDemoFilename);
+            } else if (mriData && volumeData) {
+                // User upload - must transfer full data
+                fullState.mriData = mriData;
+                fullState.volumeData = volumeData;
+            }
+
+            // Save state to server via HTTP (more reliable for large data)
+            try {
+                await fetch(API_BASE + '/session/' + sessionId + '/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(fullState)
+                });
+                console.log('Session state saved to server');
+
+                // Notify other editors via WebSocket to fetch new state
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'state_update',
+                        data: { stateUpdated: true }
+                    }));
+                }
+            } catch (error) {
+                console.error('Failed to save session state:', error);
+            }
+        }
+
+        function broadcastState(type, data) {
+            if (inSession && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'state_update',
+                    data: data
+                }));
+            }
+        }
+
+        // Throttled camera broadcast
+        let lastCameraBroadcast = 0;
+        function broadcastCamera() {
+            // Only broadcast if user is actively dragging (prevents feedback loop)
+            if (!userIsDragging) return;
+            if (isApplyingRemoteState) return;
+
+            const now = Date.now();
+            if (now - lastCameraBroadcast < 50) return; // 20fps max for smoother sync
+            lastCameraBroadcast = now;
+
+            broadcastState('camera', {
+                camera: {
+                    px: camera.position.x,
+                    py: camera.position.y,
+                    pz: camera.position.z,
+                    tx: controls.target.x,
+                    ty: controls.target.y,
+                    tz: controls.target.z
+                }
+            });
+        }
+
+        function showShareModal() {
+            // Always generate HTTP link for sharing
+            const link = SHARE_BASE + '/?session=' + sessionId;
+            document.getElementById('share-link').value = link;
+            document.getElementById('session-id-display').textContent = sessionId;
+            document.getElementById('editor-count-display').textContent = editorCount;
+            document.getElementById('share-modal').classList.add('visible');
+        }
+
+        function hideShareModal() {
+            document.getElementById('share-modal').classList.remove('visible');
+        }
+
+        function endSession() {
+            if (ws) {
+                ws.close();
+            }
+            sessionId = null;
+            inSession = false;
+            editorCount = 0;
+            updateStatusText();
+
+            // Remove session from URL
+            const url = new URL(window.location.href);
+            url.searchParams.delete('session');
+            window.history.replaceState({}, '', url);
+
+            hideShareModal();
+        }
+
+        // Check for session ID in URL on page load
+        function checkForSession() {
+            const params = new URLSearchParams(window.location.search);
+            const sid = params.get('session');
+            // Make sure it's a valid session ID, not "undefined" or empty
+            if (sid && sid !== 'undefined' && sid !== 'null' && sid.length > 0) {
+                joinSession(sid);
+                return true;
+            }
+            return false;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+
+            // Preload demo files in background for instant loading
+            preloadDemos();
+
+            // Check if joining an existing session
+            const joiningSession = checkForSession();
+
+            document.getElementById('file-input').addEventListener('change', (e) => {
+                if (e.target.files.length > 0) uploadFile(e.target.files[0]);
+            });
+
+            document.getElementById('btn-new').addEventListener('click', resetToWelcome);
+
+            // Color scheme
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    applyColorScheme(btn.dataset.scheme);
+                    broadcastState('colorScheme', { colorScheme: btn.dataset.scheme });
+                });
+            });
+
+            // Slice sliders
+            ['axial', 'sagittal', 'coronal'].forEach(axis => {
+                document.getElementById('slider-' + axis).addEventListener('input', (e) => {
+                    showSlice(axis, parseInt(e.target.value));
+                    broadcastState('slice', { slice: { axis: axis, value: parseInt(e.target.value) } });
+                });
+
+                // Slice plane toggles
+                document.getElementById('toggle-plane-' + axis).addEventListener('click', () => {
+                    toggleSlicePlane(axis);
+                });
+            });
+
+            // Threshold slider - update display on input, extract mesh only on release
+            document.getElementById('slider-threshold').addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                document.getElementById('val-threshold').textContent = Math.round(val * 100) + '%';
+                document.getElementById('fill-threshold').style.width = ((val - 0.2) / 0.6 * 100) + '%';
+            });
+            document.getElementById('slider-threshold').addEventListener('change', (e) => {
+                const val = parseFloat(e.target.value);
+                extractMesh(val);
+            });
+
+            // Opacity slider
+            document.getElementById('slider-opacity').addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                document.getElementById('val-opacity').textContent = Math.round(val * 100) + '%';
+                document.getElementById('fill-opacity').style.width = (val * 100) + '%';
+                // Only apply if not in solid mode
+                const isSolid = document.getElementById('toggle-solid').classList.contains('on');
+                if (brainMesh && !isSolid) {
+                    brainMesh.material.opacity = val;
+                    brainMesh.material.needsUpdate = true;
+                }
+            });
+
+            // Mesh detail slider - update display on input, extract mesh only on release
+            document.getElementById('slider-meshdetail').addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                document.getElementById('val-meshdetail').textContent = val;
+                document.getElementById('fill-meshdetail').style.width = ((val - 60) / 120 * 100) + '%';
+            });
+            document.getElementById('slider-meshdetail').addEventListener('change', (e) => {
+                const val = parseInt(e.target.value);
+                const threshold = parseFloat(document.getElementById('slider-threshold').value);
+                console.log('Extracting mesh with detail:', val);
+                extractMesh(threshold, val);
+            });
+
+            // Wireframe toggle
+            document.getElementById('toggle-wireframe').addEventListener('click', function() {
+                this.classList.toggle('on');
+                const isOn = this.classList.contains('on');
+                if (brainMesh) brainMesh.material.wireframe = isOn;
+
+                // Enable/disable wireframe detail slider
+                const detailRow = document.getElementById('wireframe-detail-row');
+                if (isOn) {
+                    detailRow.style.opacity = '1';
+                    detailRow.style.pointerEvents = 'auto';
+                } else {
+                    detailRow.style.opacity = '0.4';
+                    detailRow.style.pointerEvents = 'none';
+                }
+            });
+
+            // Auto-rotate toggle
+            document.getElementById('toggle-rotate').addEventListener('click', function() {
+                this.classList.toggle('on');
+                controls.autoRotate = this.classList.contains('on');
+            });
+
+            // Solid surface toggle
+            document.getElementById('toggle-solid').addEventListener('click', function() {
+                this.classList.toggle('on');
+                const isSolid = this.classList.contains('on');
+
+                // Grey out opacity slider when solid mode is on
+                const opacityRow = document.getElementById('slider-opacity').closest('.control-row');
+                if (isSolid) {
+                    opacityRow.style.opacity = '0.4';
+                    opacityRow.style.pointerEvents = 'none';
+                } else {
+                    opacityRow.style.opacity = '1';
+                    opacityRow.style.pointerEvents = 'auto';
+                }
+
+                // Re-extract mesh with solid mode (fills internal cavities on backend)
+                const threshold = parseFloat(document.getElementById('slider-threshold').value);
+                extractMesh(threshold, null, isSolid);
+            });
+
+            // Annotation mode toggle
+            document.getElementById('toggle-annotate').addEventListener('click', function() {
+                this.classList.toggle('on');
+                annotationMode = this.classList.contains('on');
+                const indicator = document.getElementById('ann-mode-indicator');
+                if (annotationMode) {
+                    indicator.textContent = 'Click on brain to place marker';
+                    indicator.classList.add('active');
+                    controls.enableRotate = false; // Disable rotation while annotating
+                } else {
+                    indicator.textContent = 'Click brain to add markers';
+                    indicator.classList.remove('active');
+                    controls.enableRotate = true;
+                }
+            });
+
+            // Annotation color selection
+            document.querySelectorAll('.ann-color-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.ann-color-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    annotationColor = this.dataset.color;
+                });
+            });
+
+            // Clear all annotations button
+            document.getElementById('btn-clear-annotations').addEventListener('click', clearAllAnnotations);
+
+            // Canvas click handler for annotations
+            renderer.domElement.addEventListener('click', onCanvasClick);
+
+            // Canvas mousemove handler for annotation tooltips
+            renderer.domElement.addEventListener('mousemove', onCanvasMouseMove);
+            renderer.domElement.addEventListener('mouseleave', hideAnnotationTooltip);
+
+            // ============== Collaboration Event Listeners ==============
+
+            // Share button
+            document.getElementById('btn-share').addEventListener('click', () => {
+                if (sessionId) {
+                    showShareModal();
+                } else {
+                    createSession();
+                }
+            });
+
+            // Modal close
+            document.getElementById('modal-close').addEventListener('click', hideShareModal);
+            document.getElementById('share-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'share-modal') hideShareModal();
+            });
+
+            // Copy link button
+            document.getElementById('btn-copy').addEventListener('click', () => {
+                const input = document.getElementById('share-link');
+                input.select();
+                document.execCommand('copy');
+                const btn = document.getElementById('btn-copy');
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+
+            // End session button
+            document.getElementById('btn-end-session').addEventListener('click', () => {
+                if (confirm('Leave this session?')) {
+                    endSession();
+                }
+            });
+
+            // Track user interaction to prevent feedback loop
+            const canvas = document.getElementById('canvas-container');
+            canvas.addEventListener('mousedown', () => { userIsDragging = true; });
+            canvas.addEventListener('mouseup', () => { userIsDragging = false; });
+            canvas.addEventListener('mouseleave', () => { userIsDragging = false; });
+            canvas.addEventListener('touchstart', () => { userIsDragging = true; });
+            canvas.addEventListener('touchend', () => { userIsDragging = false; });
+
+            // Camera change broadcasting (throttled) - only when user is dragging
+            controls.addEventListener('change', () => {
+                if (inSession) broadcastCamera();
+            });
+        });
+    </script>
+</body>
+</html>

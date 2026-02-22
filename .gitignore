@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+/tmp/
+*.log
+.env
+venv/
+build/
+dist/
+
+# Ignore NIfTI files except in demos folder
+*.nii
+*.nii.gz
+!demos/*.nii
+!demos/*.nii.gz

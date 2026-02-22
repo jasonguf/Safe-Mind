@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroView - Interactive Brain MRI Learning Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #141a22;
+            --bg-panel: #181f28;
+            --bg-input: #10151c;
+            --border: #2a3a4a;
+            --text: #c5d0dc;
+            --text-dim: #6a7a8a;
+            --accent: #4a9a8c;
+            --accent-bright: #5aaa9c;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Hexagon Pattern Background */
+        .neural-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.06;
+            pointer-events: none;
+            background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="hexagons" x="0" y="0" width="86.6" height="50" patternUnits="userSpaceOnUse" patternTransform="translate(0,0)"><polygon points="25,0 75,0 100,43.3 75,86.6 25,86.6 0,43.3" fill="none" stroke="%234a9a8c" stroke-width="0.5" opacity="0.6"/></pattern></defs><rect width="100%" height="100%" fill="url(%23hexagons)"/></svg>');
+            background-size: 200px 200px;
+        }
+
+        /* Glow Accents */
+        .glow-accent {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-1 {
+            top: 10%;
+            left: 10%;
+            background: radial-gradient(circle, rgba(74, 154, 140, 0.15) 0%, transparent 70%);
+        }
+
+        .glow-2 {
+            bottom: 10%;
+            right: 10%;
+            background: radial-gradient(circle, rgba(74, 154, 140, 0.1) 0%, transparent 70%);
+        }
+
+
+        /* Neural Network Canvas */
+        .neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Navigation Bar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(20, 26, 34, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.2rem 5%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 4rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.5rem 0;
+            font-weight: 500;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Title Section */
+        .title-section {
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 6rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 8px;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: titleReveal 1.5s ease-out 0.3s forwards;
+            text-shadow:
+                0 0 20px rgba(74, 154, 140, 0.4),
+                0 0 40px rgba(74, 154, 140, 0.2);
+        }
+
+        @keyframes titleReveal {
+            0% {
+                opacity: 0;
+                letter-spacing: 30px;
+                filter: blur(8px);
+            }
+            100% {
+                opacity: 1;
+                letter-spacing: 8px;
+                filter: blur(0px);
+            }
+        }
+
+        .subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 1s forwards;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 2rem 3rem;
+            max-width: 500px;
+            text-align: center;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 1.2s forwards;
+        }
+
+        .info-heading {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.8rem;
+        }
+
+        .info-text {
+            font-size: 1rem;
+            color: var(--text-dim);
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+
+        .info-features {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.2rem;
+            padding-top: 1.2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--accent);
+        }
+
+        .feature-icon {
+            font-size: 1.1rem;
+        }
+
+        /* CTA Button */
+        .cta-section {
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 1.4s forwards;
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--accent);
+            color: var(--bg-dark);
+            padding: 1rem 2.5rem;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-decoration: none;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .cta-btn:hover {
+            background: var(--accent-bright);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(74, 154, 140, 0.3);
+        }
+
+        .cta-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .cta-btn:hover .cta-icon {
+            transform: translateX(5px);
+        }
+
+        /* Secondary Links */
+        .secondary-links {
+            margin-top: 1.5rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 1.6s forwards;
+        }
+
+        .secondary-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin: 0 1rem;
+            transition: color 0.3s;
+        }
+
+        .secondary-links a:hover {
+            color: var(--accent);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem 5%;
+            }
+
+            .nav-links {
+                gap: 2rem;
+            }
+
+            h1 {
+                font-size: 3.5rem;
+                letter-spacing: 4px;
+            }
+
+            @keyframes titleReveal {
+                0% {
+                    opacity: 0;
+                    letter-spacing: 15px;
+                    filter: blur(8px);
+                }
+                100% {
+                    opacity: 1;
+                    letter-spacing: 4px;
+                    filter: blur(0px);
+                }
+            }
+
+            .info-box {
+                margin: 0 1rem 2rem;
+                padding: 1.5rem;
+            }
+
+            .info-features {
+                flex-direction: column;
+                gap: 0.8rem;
+            }
+
+            .brain-illustration {
+                width: 300px;
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Elements -->
+    <div class="neural-bg"></div>
+    <div class="glow-accent glow-1"></div>
+    <div class="glow-accent glow-2"></div>
+
+    <!-- Neural Network Canvas -->
+    <canvas id="neuralCanvas" class="neural-canvas"></canvas>
+
+    <!-- Navigation Bar -->
+    <nav>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/instructions">Instructions</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <section class="hero">
+        <div class="title-section">
+            <h1>NEUROVIEW</h1>
+            <div class="subtitle">Interactive Brain MRI Viewer</div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-heading">Learn Neuroanatomy in 3D</div>
+            <div class="info-text">
+                Explore brain MRI scans in an interactive 3D environment. Upload your own NIfTI files or use our built-in demo scans to study brain structures. Perfect for students, educators, and curious minds.
+            </div>
+            <div class="info-features">
+                <div class="feature">
+                    <span class="feature-icon">&#9679;</span>
+                    <span>Demo MRI Scans Included</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">&#9679;</span>
+                    <span>Real-time Collaboration</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <a href="/app" class="cta-btn">
+                <span>Launch Viewer</span>
+                <span class="cta-icon">&#8594;</span>
+            </a>
+        </div>
+
+        <div class="secondary-links">
+            <a href="/instructions">How to Use</a>
+        </div>
+    </section>
+
+    <script>
+        // Neural Network Constellation Animation
+        const canvas = document.getElementById('neuralCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let nodes = [];
+        let mouse = { x: null, y: null, radius: 150 };
+
+        const config = {
+            gridSpacing: 100,
+            nodeJitter: 30,
+            connectionDistance: 160,
+            nodeSpeed: 0.05,
+            nodeSize: { min: 2, max: 4 },
+            colors: {
+                node: '#4a9a8c',
+                nodeBright: '#5aaa9c',
+                connection: '#4a9a8c'
+            },
+            pulseSpeed: 0.005
+        };
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        class Node {
+            constructor(gridX, gridY) {
+                // Position on grid with some random jitter
+                this.baseX = gridX;
+                this.baseY = gridY;
+                this.x = gridX + (Math.random() - 0.5) * config.nodeJitter * 2;
+                this.y = gridY + (Math.random() - 0.5) * config.nodeJitter * 2;
+                this.vx = (Math.random() - 0.5) * config.nodeSpeed;
+                this.vy = (Math.random() - 0.5) * config.nodeSpeed;
+                this.baseRadius = Math.random() * (config.nodeSize.max - config.nodeSize.min) + config.nodeSize.min;
+                this.radius = this.baseRadius;
+                this.pulseOffset = Math.random() * Math.PI * 2;
+                this.brightness = 0.3 + Math.random() * 0.4;
+                this.targetBrightness = this.brightness;
+            }
+
+            update(time) {
+                // Gentle oscillation around grid position
+                this.x = this.baseX + Math.sin(time * 0.0002 + this.pulseOffset) * config.nodeJitter;
+                this.y = this.baseY + Math.cos(time * 0.00015 + this.pulseOffset * 1.5) * config.nodeJitter;
+
+                // Pulse effect
+                this.radius = this.baseRadius + Math.sin(time * config.pulseSpeed + this.pulseOffset) * 0.5;
+
+                // Mouse interaction
+                if (mouse.x !== null) {
+                    const dx = this.x - mouse.x;
+                    const dy = this.y - mouse.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < mouse.radius) {
+                        this.targetBrightness = 1;
+                        // Push away from mouse
+                        const force = (mouse.radius - dist) / mouse.radius * 25;
+                        this.x += (dx / dist) * force * 0.1;
+                        this.y += (dy / dist) * force * 0.1;
+                    } else {
+                        this.targetBrightness = 0.3 + Math.random() * 0.4;
+                    }
+                }
+
+                // Smooth brightness transition
+                this.brightness += (this.targetBrightness - this.brightness) * 0.1;
+            }
+
+            draw() {
+                // Glow effect
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.radius * 4
+                );
+                gradient.addColorStop(0, `rgba(74, 154, 140, ${this.brightness})`);
+                gradient.addColorStop(0.5, `rgba(74, 154, 140, ${this.brightness * 0.3})`);
+                gradient.addColorStop(1, 'rgba(74, 154, 140, 0)');
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius * 4, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+
+                // Core
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(90, 170, 156, ${this.brightness + 0.2})`;
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            resize();
+            nodes = [];
+
+            // Create grid of nodes
+            const cols = Math.ceil(width / config.gridSpacing) + 1;
+            const rows = Math.ceil(height / config.gridSpacing) + 1;
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const gridX = col * config.gridSpacing;
+                    const gridY = row * config.gridSpacing;
+                    nodes.push(new Node(gridX, gridY));
+                }
+            }
+        }
+
+        function drawConnections(time) {
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dx = nodes[i].x - nodes[j].x;
+                    const dy = nodes[i].y - nodes[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < config.connectionDistance) {
+                        const opacity = (1 - dist / config.connectionDistance) * 0.5;
+
+                        // Pulsing connection
+                        const pulse = Math.sin(time * 0.003 + i + j) * 0.2 + 0.8;
+
+                        ctx.beginPath();
+                        ctx.moveTo(nodes[i].x, nodes[i].y);
+                        ctx.lineTo(nodes[j].x, nodes[j].y);
+                        ctx.strokeStyle = `rgba(74, 154, 140, ${opacity * pulse})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+
+                        // Signal traveling along connection (occasionally)
+                        if (Math.random() < 0.001) {
+                            drawSignal(nodes[i], nodes[j], time);
+                        }
+                    }
+                }
+            }
+        }
+
+        let signals = [];
+
+        function drawSignal(nodeA, nodeB, time) {
+            signals.push({
+                startX: nodeA.x,
+                startY: nodeA.y,
+                endX: nodeB.x,
+                endY: nodeB.y,
+                progress: 0,
+                speed: 0.001 + Math.random() * 0.001
+            });
+        }
+
+        function updateSignals() {
+            signals = signals.filter(signal => {
+                signal.progress += signal.speed;
+
+                if (signal.progress >= 1) return false;
+
+                const x = signal.startX + (signal.endX - signal.startX) * signal.progress;
+                const y = signal.startY + (signal.endY - signal.startY) * signal.progress;
+
+                // Draw signal
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, 8);
+                gradient.addColorStop(0, 'rgba(90, 170, 156, 0.9)');
+                gradient.addColorStop(0.5, 'rgba(74, 154, 140, 0.4)');
+                gradient.addColorStop(1, 'rgba(74, 154, 140, 0)');
+
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+
+                return true;
+            });
+        }
+
+        function animate(time) {
+            ctx.clearRect(0, 0, width, height);
+
+            // Update and draw connections
+            drawConnections(time);
+
+            // Update and draw signals
+            updateSignals();
+
+            // Update and draw nodes
+            for (const node of nodes) {
+                node.update(time);
+                node.draw();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Event listeners
+        window.addEventListener('resize', () => {
+            init(); // Reinitialize grid on resize
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        // Start animation
+        init();
+        animate(0);
+    </script>
+</body>
+</html>

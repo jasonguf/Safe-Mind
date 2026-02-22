@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructions - NeuroView</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #141a22;
+            --bg-panel: #181f28;
+            --bg-input: #10151c;
+            --border: #2a3a4a;
+            --text: #c5d0dc;
+            --text-dim: #6a7a8a;
+            --accent: #4a9a8c;
+            --accent-bright: #6fcfbe;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Subtle grid background */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.03;
+            pointer-events: none;
+            background-image:
+                linear-gradient(var(--accent) 1px, transparent 1px),
+                linear-gradient(90deg, var(--accent) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        /* Navigation Bar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 1.2rem 5%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 4rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.5rem 0;
+            font-weight: 500;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Main Content Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 5%;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Instructions Page Section */
+        .instructions-page {
+            min-height: 100vh;
+            padding: 120px 5% 80px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .instructions-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-align: center;
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 0.2s forwards;
+        }
+
+        .instructions-subtitle {
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            text-align: center;
+            margin-bottom: 3rem;
+            font-weight: 400;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 0.4s forwards;
+        }
+
+        .instructions-intro {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 0.5s forwards;
+        }
+
+        .instructions-intro p {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .step-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            padding-top: 2.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .step-card:nth-child(1) { animation-delay: 0.6s; }
+        .step-card:nth-child(2) { animation-delay: 0.7s; }
+        .step-card:nth-child(3) { animation-delay: 0.8s; }
+        .step-card:nth-child(4) { animation-delay: 0.9s; }
+        .step-card:nth-child(5) { animation-delay: 1.0s; }
+
+        .step-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .step-number {
+            position: absolute;
+            top: -18px;
+            left: 2rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+            color: var(--bg-dark);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border: 3px solid var(--bg-dark);
+        }
+
+        .step-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .step-description {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--text-dim);
+            margin-bottom: 1rem;
+        }
+
+        .step-details {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--text-dim);
+            padding-left: 1.5rem;
+            border-left: 3px solid var(--accent);
+            margin-top: 1rem;
+            list-style: none;
+        }
+
+        .step-details li {
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .step-details li::before {
+            content: '>';
+            color: var(--accent);
+            margin-right: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tip-box {
+            background: rgba(74, 154, 140, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 1.2rem 1.5rem;
+            margin-top: 2rem;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 1.2s forwards;
+        }
+
+        .tip-box-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .tip-box p {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--text-dim);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem 5%;
+            }
+
+            .nav-links {
+                gap: 2rem;
+            }
+
+            .instructions-title {
+                font-size: 1.8rem;
+            }
+
+            .instructions-page {
+                padding: 100px 5% 60px;
+            }
+
+            .step-card {
+                padding: 1.5rem;
+                padding-top: 2rem;
+            }
+
+            .step-number {
+                width: 38px;
+                height: 38px;
+                font-size: 1rem;
+            }
+
+            .step-title {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Grid Background -->
+    <div class="grid-bg"></div>
+
+    <!-- Navigation Bar -->
+    <nav>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/instructions">Instructions</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <section class="instructions-page">
+            <h1 class="instructions-title">User Guide</h1>
+            <p class="instructions-subtitle">How to Use NeuroView</p>
+
+            <div class="instructions-intro">
+                <p>
+                    NeuroView is a web-based platform for visualizing and collaborating on brain MRI scans. No downloads required - just open the app in your browser and start exploring. Follow these steps to get started.
+                </p>
+            </div>
+
+            <div class="steps-container">
+                <!-- Step 1 -->
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3 class="step-title">Open the Web App</h3>
+                    <p class="step-description">
+                        NeuroView is a web-based application - no download required. Simply click "Open Software" on the home page to get started.
+                    </p>
+                    <ul class="step-details">
+                        <li>Click "Open Software" from the home page</li>
+                        <li>Works in any modern browser (Chrome, Firefox, Safari, Edge)</li>
+                        <li>No installation or setup required</li>
+                        <li>Access from any device with an internet connection</li>
+                    </ul>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3 class="step-title">Load Your MRI Scan</h3>
+                    <p class="step-description">
+                        Upload a NIfTI brain scan file (.nii or .nii.gz) to visualize it in 3D.
+                    </p>
+                    <ul class="step-details">
+                        <li>Click "Load New Scan" or "Select NIfTI File"</li>
+                        <li>Choose your .nii or .nii.gz file</li>
+                        <li>Wait for the scan to process and render</li>
+                        <li>View your brain scan in interactive 3D</li>
+                    </ul>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3 class="step-title">Explore & Analyze</h3>
+                    <p class="step-description">
+                        Use the visualization tools to examine brain structures from any angle with adjustable settings.
+                    </p>
+                    <ul class="step-details">
+                        <li>Rotate and zoom the 3D brain model</li>
+                        <li>Adjust depth threshold and opacity</li>
+                        <li>Toggle wireframe view for detailed structure</li>
+                        <li>Browse axial, sagittal, and coronal slices</li>
+                    </ul>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h3 class="step-title">Add Annotations</h3>
+                    <p class="step-description">
+                        Mark regions of interest directly on the 3D brain model with colored markers and labels.
+                    </p>
+                    <ul class="step-details">
+                        <li>Enable "Annotate Mode" in the left panel</li>
+                        <li>Choose a marker color</li>
+                        <li>Click on the brain to place markers</li>
+                        <li>Add labels to identify regions of interest</li>
+                    </ul>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="step-card">
+                    <div class="step-number">5</div>
+                    <h3 class="step-title">Collaborate in Real-Time</h3>
+                    <p class="step-description">
+                        Share your session with colleagues for real-time collaborative analysis - up to 4 people can edit together.
+                    </p>
+                    <ul class="step-details">
+                        <li>Click "Share Session" to create a shareable link</li>
+                        <li>Send the link to up to 3 colleagues</li>
+                        <li>Everyone can view, annotate, and navigate together</li>
+                        <li>Changes sync instantly across all participants</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-box-title">Quick Tip</div>
+                <p>
+                    For the best experience, use a modern browser like Chrome or Firefox. The 3D viewer works best with hardware acceleration enabled. Supported file formats: NIfTI (.nii, .nii.gz).
+                </p>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
