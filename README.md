@@ -1,4 +1,4 @@
-# NeuroView
+# SafeMind
 
 A web-based 3D brain MRI viewer that converts NIfTI brain scans into interactive 3D models with adjustable depth visualization.
 
@@ -35,7 +35,7 @@ A web-based 3D brain MRI viewer that converts NIfTI brain scans into interactive
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/neuroview.git
+git clone https://github.com/YOUR_USERNAME/SafeMind.git
 cd neuroview
 ```
 
@@ -88,7 +88,7 @@ nib.save(brain_img, 'brain_only.nii.gz')
 
 ## Desktop Application
 
-NeuroView can be built as a standalone desktop application for Mac and Windows.
+SafeMind can be built as a standalone desktop application for Mac and Windows.
 
 ### Build for macOS
 
